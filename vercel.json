@@ -4,6 +4,14 @@
     {
       "src": "server/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "projectEuropa.png",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -13,7 +21,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "server/server.js"
+      "dest": "/index.html"
     }
   ]
 }
