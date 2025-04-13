@@ -1,9 +1,12 @@
 // src/main.js
+// Tente renomear para main.mjs, ou confira se o arquivo está como puro JavaScript sem caracteres especiais.
+
 function formatDate(dateString) {
   if (!dateString) return '-';
   const date = new Date(dateString);
   return date.toLocaleDateString('pt-BR');
 }
+
 function calculateAge(birthDate) {
   if (!birthDate) return '-';
   const birth = new Date(birthDate);
@@ -15,18 +18,22 @@ function calculateAge(birthDate) {
   }
   return age;
 }
+
 function formatCurrency(value) {
   if (value === null || value === undefined) return '-';
-  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return Number(value).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
 }
+
 function formatBoolean(value) {
   if (value === null || value === undefined) return '-';
-  return value === 'true' || value === true ? 'SIM' : 'NÃO';
+  return value === true || value === 'true' ? 'SIM' : 'NÃO';
 }
-function formatBankInfo(bankAccount) {
-  if (!bankAccount) return '-';
-  return `${bankAccount.bankCode} - ${bankAccount.bankName}`;
-}
+
 function showToast(message, type = 'success') {
   Toastify({
     text: message,
@@ -55,17 +62,18 @@ const availableLimitEl = document.getElementById('availableLimit');
 const usedPercentageEl = document.getElementById('usedPercentage');
 const totalCarregadoEl = document.getElementById('totalCarregado');
 
-loginForm.addEventListener('submit', function(e) {
+// Login
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
-  fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login: username, senha: password })
-  })
-  .then(res => res.json())
-  .then(data => {
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: username, senha: password })
+    });
+    const data = await res.json();
     if (data.error) {
       loginError.textContent = data.error;
       loginError.classList.remove('hidden');
@@ -76,13 +84,15 @@ loginForm.addEventListener('submit', function(e) {
       dashboardScreen.classList.remove('hidden');
       loggedUserName.textContent = data.login;
       if (data.creditos) {
-        totalCarregadoEl.textContent = parseInt(data.creditos.total_carregado);
-        availableLimitEl.textContent = parseInt(data.creditos.limite_disponivel);
-        queriesCount.textContent = parseInt(data.creditos.consultas_realizada);
+        totalCarregadoEl.textContent = parseInt(data.creditos.total_carregado) || 0;
+        availableLimitEl.textContent = parseInt(data.creditos.limite_disponivel) || 0;
+        queriesCount.textContent = parseInt(data.creditos.consultas_realizada) || 0;
         amountSpent.textContent = 'R$ 0';
         let usedPerc = 0;
-        if (parseInt(data.creditos.total_carregado) > 0) {
-          usedPerc = (parseInt(data.creditos.consultas_realizada) / parseInt(data.creditos.total_carregado)) * 100;
+        const totalC = parseInt(data.creditos.total_carregado) || 0;
+        const totalR = parseInt(data.creditos.consultas_realizada) || 0;
+        if (totalC > 0) {
+          usedPerc = (totalR / totalC) * 100;
         }
         usedPercentageEl.textContent = usedPerc.toFixed(2).replace('.', ',') + '%';
       } else {
@@ -94,55 +104,51 @@ loginForm.addEventListener('submit', function(e) {
       }
       showToast('Login realizado com sucesso!', 'success');
     }
-  })
-  .catch(err => {
+  } catch (err) {
     loginError.textContent = 'Erro no login.';
     loginError.classList.remove('hidden');
     showToast('Erro no login.', 'error');
     console.error(err);
-  });
+  }
 });
 
-logoutBtn.addEventListener('click', function() {
+// Logout
+logoutBtn.addEventListener('click', () => {
   resultsSection.classList.add('hidden');
   searchForm.reset();
   dashboardScreen.classList.add('hidden');
   loginScreen.classList.remove('hidden');
 });
 
-async function consultarBeneficio(cpf, nb, userLogin) {
-  try {
-    const response = await fetch('/api/consulta', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cpf, nb, login: userLogin })
-    });
-    if (!response.ok) {
-      throw new Error('Erro na consulta');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na chamada da API:', error);
-    throw error;
-  }
-}
-
-searchForm.addEventListener('submit', async function(e) {
+// Consulta
+searchForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const cpf = document.getElementById('cpf').value;
   const nb = document.getElementById('nb').value;
   const userLogin = loggedUserName.textContent;
+
   if (!cpf || !nb) {
     resultsError.textContent = 'Por favor, preencha ambos os campos (CPF e NB)';
     resultsError.classList.remove('hidden');
     showToast('Preencha os campos de CPF e NB', 'error');
     return;
   }
+
   searchBtnText.textContent = 'Consultando...';
   resultsSection.classList.add('hidden');
   resultsError.classList.add('hidden');
+
   try {
-    const response = await consultarBeneficio(cpf, nb, userLogin);
+    const res = await fetch('/api/consulta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf, nb, login: userLogin })
+    });
+    if (!res.ok) {
+      throw new Error('Erro na consulta');
+    }
+    const response = await res.json();
+
     if (response.error) {
       resultsError.textContent = response.error;
       resultsError.classList.remove('hidden');
@@ -154,41 +160,43 @@ searchForm.addEventListener('submit', async function(e) {
       resultsError.textContent = 'Nenhum dado encontrado.';
       resultsError.classList.remove('hidden');
     } else {
-      availableLimitEl.textContent = parseInt(response.limite_disponivel);
-      queriesCount.textContent = parseInt(response.consultas_realizada);
-      totalCarregadoEl.textContent = parseInt(response.total_carregado);
+      availableLimitEl.textContent = parseInt(response.limite_disponivel) || 0;
+      queriesCount.textContent = parseInt(response.consultas_realizada) || 0;
+      totalCarregadoEl.textContent = totalCarregadoEl.textContent || 0; // Ajuste se quiser puxar do BD
+
       let usedPerc = 0;
-      if (parseInt(response.total_carregado) > 0) {
-        usedPerc = (parseInt(response.consultas_realizada) / parseInt(response.total_carregado)) * 100;
+      if (parseInt(totalCarregadoEl.textContent) > 0) {
+        usedPerc = (parseInt(queriesCount.textContent) / parseInt(totalCarregadoEl.textContent)) * 100;
       }
       usedPercentageEl.textContent = usedPerc.toFixed(2).replace('.', ',') + '%';
+
       const currentSpent = parseInt(amountSpent.textContent.replace('R$', '').replace(/\s/g, ''));
       const newSpent = currentSpent + 0.05;
       amountSpent.textContent = `R$ ${newSpent.toFixed(0)}`;
-      document.getElementById('benefitNumber').textContent = response.benefitNumber || '-';
-      document.getElementById('documentNumber').textContent = response.documentNumber || '-';
-      document.getElementById('name').textContent = response.name || '-';
-      document.getElementById('state').textContent = response.state || '-';
-      document.getElementById('alimony').textContent = formatBoolean(response.alimony);
-      document.getElementById('birthDate').textContent = formatDate(response.birthDate);
-      document.getElementById('age').textContent = calculateAge(response.birthDate);
-      document.getElementById('blockType').textContent = response.blockType || '-';
-      document.getElementById('grantDate').textContent = formatDate(response.grantDate);
-      document.getElementById('benefitEndDate').textContent = formatDate(response.benefitEndDate);
-      document.getElementById('creditType').textContent = response.creditType || '-';
-      document.getElementById('benefitCardLimit').textContent = formatCurrency(response.benefitCardLimit);
-      document.getElementById('benefitCardBalance').textContent = formatCurrency(response.benefitCardBalance);
-      document.getElementById('availableTotalBalance').textContent = formatCurrency(response.availableTotalBalance);
-      document.getElementById('benefitStatus').textContent = response.benefitStatus || '-';
-      document.getElementById('legalRepresentativeName').textContent = response.legalRepresentativeName || '-';
-      document.getElementById('bankInfo').textContent = formatBankInfo({
-        bankCode: response.bankCode,
-        bankName: response.bankName
-      });
-      document.getElementById('agencyCode').textContent = response.agencyCode || '-';
-      document.getElementById('accountNumber').textContent = response.accountNumber || '-';
-      document.getElementById('accountDigit').textContent = response.accountDigit || '-';
-      document.getElementById('numberOfActiveReservations').textContent = response.numberOfActiveReservations || '0';
+
+      const dataApi = response.consultas_api || {};
+      document.getElementById('benefitNumber').textContent = dataApi.numero_beneficio || '-';
+      document.getElementById('documentNumber').textContent = dataApi.numero_documento || '-';
+      document.getElementById('name').textContent = dataApi.nome || '-';
+      document.getElementById('state').textContent = dataApi.estado || '-';
+      document.getElementById('alimony').textContent = formatBoolean(dataApi.pensao);
+      document.getElementById('birthDate').textContent = formatDate(dataApi.data_nascimento);
+      document.getElementById('age').textContent = calculateAge(dataApi.data_nascimento);
+      document.getElementById('blockType').textContent = dataApi.tipo_bloqueio || '-';
+      document.getElementById('grantDate').textContent = formatDate(dataApi.data_concessao);
+      document.getElementById('benefitEndDate').textContent = formatDate(dataApi.data_final_beneficio);
+      document.getElementById('creditType').textContent = dataApi.tipo_credito || '-';
+      document.getElementById('benefitCardLimit').textContent = formatCurrency(dataApi.limite_cartao_beneficio);
+      document.getElementById('benefitCardBalance').textContent = formatCurrency(dataApi.saldo_cartao_beneficio);
+      document.getElementById('availableTotalBalance').textContent = formatCurrency(dataApi.saldo_total_disponivel);
+      document.getElementById('benefitStatus').textContent = dataApi.situacao_beneficio || '-';
+      document.getElementById('legalRepresentativeName').textContent = dataApi.nome_representante_legal || '-';
+      document.getElementById('bankInfo').textContent = dataApi.banco_desembolso || '-';
+      document.getElementById('agencyCode').textContent = dataApi.agencia_desembolso || '-';
+      document.getElementById('accountNumber').textContent = dataApi.conta_desembolso || '-';
+      document.getElementById('accountDigit').textContent = dataApi.digito_desembolso || '-';
+      document.getElementById('numberOfActiveReservations').textContent = dataApi.numero_portabilidades || '0';
+
       resultsSection.classList.remove('hidden');
       showToast('Consulta realizada com sucesso!', 'success');
     }
@@ -196,12 +204,14 @@ searchForm.addEventListener('submit', async function(e) {
     resultsError.textContent = 'Erro ao consultar os dados. Tente novamente.';
     resultsError.classList.remove('hidden');
     showToast('Erro na consulta. Verifique os dados e tente novamente.', 'error');
+    console.error(error);
   } finally {
     searchBtnText.textContent = 'Pesquisar';
   }
 });
 
-document.getElementById('cpf').addEventListener('input', function(e) {
+// Máscara CPF
+document.getElementById('cpf').addEventListener('input', (e) => {
   let value = e.target.value.replace(/\D/g, '');
   if (value.length > 3) {
     value = value.substring(0, 3) + '.' + value.substring(3);
@@ -215,23 +225,27 @@ document.getElementById('cpf').addEventListener('input', function(e) {
   e.target.value = value.substring(0, 14);
 });
 
-document.getElementById('nb').addEventListener('input', function(e) {
+// Máscara NB
+document.getElementById('nb').addEventListener('input', (e) => {
   let numbers = e.target.value.replace(/\D/g, '');
   if (numbers.length > 10) {
     numbers = numbers.substring(0, 10);
   }
   if (numbers.length >= 9) {
-    e.target.value = numbers.substring(0,3) + '.' + 
-                     numbers.substring(3,6) + '.' + 
-                     numbers.substring(6,9) + '-' +
-                     numbers.substring(9,10);
+    e.target.value =
+      numbers.substring(0, 3) + '.' +
+      numbers.substring(3, 6) + '.' +
+      numbers.substring(6, 9) + '-' +
+      numbers.substring(9, 10);
   } else if (numbers.length >= 6) {
-    e.target.value = numbers.substring(0,3) + '.' + 
-                     numbers.substring(3,6) + '.' + 
-                     numbers.substring(6);
+    e.target.value =
+      numbers.substring(0, 3) + '.' +
+      numbers.substring(3, 6) + '.' +
+      numbers.substring(6);
   } else if (numbers.length >= 3) {
-    e.target.value = numbers.substring(0,3) + '.' + 
-                     numbers.substring(3);
+    e.target.value =
+      numbers.substring(0, 3) + '.' +
+      numbers.substring(3);
   } else {
     e.target.value = numbers;
   }
