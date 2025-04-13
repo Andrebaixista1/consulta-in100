@@ -42,7 +42,7 @@ app.post('/api/login', async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT b.id AS userId, b.nome, b.login, b.senha, b.data_criacao, b.ultimo_log,
-              c.total_carregado, c.limite_disponivel, c.consultas_realizadas
+              c.total_carregado, c.limite_disponivel, c.consultas_realizada
          FROM usuarios b
          LEFT JOIN creditos c ON c.id_user = b.id
          WHERE b.login = ?
@@ -60,12 +60,12 @@ app.post('/api/login', async (req, res) => {
     const creditos = {
       total_carregado: parseInt(user.total_carregado) || 0,
       limite_disponivel: parseInt(user.limite_disponivel) || 0,
-      consultas_realizadas: parseInt(user.consultas_realizadas) || 0
+      consultas_realizada: parseInt(user.consultas_realizada) || 0
     };
     delete user.senha;
     delete user.total_carregado;
     delete user.limite_disponivel;
-    delete user.consultas_realizadas;
+    delete user.consultas_realizada;
     user.creditos = creditos;
     return res.json(user);
   } catch (error) {
@@ -93,21 +93,21 @@ app.post('/api/consulta', async (req, res) => {
     
     // Verificar créditos
     const [creditRows] = await pool.query(
-      'SELECT limite_disponivel, consultas_realizadas FROM creditos WHERE id_user = ? LIMIT 1',
+      'SELECT limite_disponivel, consultas_realizada FROM creditos WHERE id_user = ? LIMIT 1',
       [userId]
     );
     if (creditRows.length === 0) {
       return res.status(400).json({ error: 'Créditos não configurados para este usuário.' });
     }
     let limiteDisp = parseInt(creditRows[0].limite_disponivel) || 0;
-    let consultasReal = parseInt(creditRows[0].consultas_realizadas) || 0;
+    let consultasReal = parseInt(creditRows[0].consultas_realizada) || 0;
     if (limiteDisp <= 0) {
       return res.status(400).json({ error: 'Créditos esgotados para este usuário.' });
     }
     limiteDisp -= 1;
     consultasReal += 1;
     await pool.query(
-      'UPDATE creditos SET limite_disponivel = ?, consultas_realizadas = ? WHERE id_user = ?',
+      'UPDATE creditos SET limite_disponivel = ?, consultas_realizada = ? WHERE id_user = ?',
       [limiteDisp, consultasReal, userId]
     );
     
@@ -303,7 +303,7 @@ app.post('/api/consulta', async (req, res) => {
     return res.json({
       consultas_api: newRecord,
       limite_disponivel: limiteDisp,
-      consultas_realizadas: consultasReal
+      consultas_realizada: consultasReal
     });
   } catch (error) {
     console.error(error);
@@ -314,3 +314,5 @@ app.post('/api/consulta', async (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor de API rodando na porta ${port}`);
 });
+
+export default app;
