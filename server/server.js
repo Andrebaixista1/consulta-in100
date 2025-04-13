@@ -1,4 +1,3 @@
-// server/server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import axios from 'axios';
@@ -6,7 +5,7 @@ import mysql from 'mysql2/promise';
 
 dotenv.config();
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 app.use(express.json());
 
 function convertDate(str) {
@@ -35,13 +34,13 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// LOGIN
+// Rota de LOGIN
 app.post('/api/login', async (req, res) => {
   const { login, senha } = req.body;
   try {
     const [rows] = await pool.query(
       `SELECT b.id AS userId, b.nome, b.login, b.senha, b.data_criacao, b.ultimo_log,
-              c.total_carregado, c.limite_disponivel, c.consultas_realizada
+              c.total_carregado, c.limite_disponivel, c.consultas_realizadas
          FROM usuarios b
          LEFT JOIN creditos c ON c.id_user = b.id
          WHERE b.login = ?
@@ -59,20 +58,21 @@ app.post('/api/login', async (req, res) => {
     const creditos = {
       total_carregado: parseInt(user.total_carregado) || 0,
       limite_disponivel: parseInt(user.limite_disponivel) || 0,
-      consultas_realizada: parseInt(user.consultas_realizada) || 0
+      consultas_realizadas: parseInt(user.consultas_realizadas) || 0
     };
     delete user.senha;
     delete user.total_carregado;
     delete user.limite_disponivel;
-    delete user.consultas_realizada;
+    delete user.consultas_realizadas;
     user.creditos = creditos;
     return res.json(user);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Erro interno no servidor.' });
   }
 });
 
-// CONSULTA
+// Rota de CONSULTA
 app.post('/api/consulta', async (req, res) => {
   const { cpf, nb, login } = req.body;
   try {
@@ -81,32 +81,35 @@ app.post('/api/consulta', async (req, res) => {
     }
     const rawCPF = sanitizeDoc(cpf);
     const rawNB = sanitizeDoc(nb);
-
+    
+    // Obter o id do usuário
     const [userRows] = await pool.query('SELECT id FROM usuarios WHERE login = ? LIMIT 1', [login]);
     if (userRows.length === 0) {
       return res.status(404).json({ error: 'Usuário não encontrado para registrar a consulta.' });
     }
     const userId = userRows[0].id;
-
+    
+    // Verificar créditos
     const [creditRows] = await pool.query(
-      'SELECT limite_disponivel, consultas_realizada FROM creditos WHERE id_user = ? LIMIT 1',
+      'SELECT limite_disponivel, consultas_realizadas FROM creditos WHERE id_user = ? LIMIT 1',
       [userId]
     );
     if (creditRows.length === 0) {
       return res.status(400).json({ error: 'Créditos não configurados para este usuário.' });
     }
     let limiteDisp = parseInt(creditRows[0].limite_disponivel) || 0;
-    let consultasReal = parseInt(creditRows[0].consultas_realizada) || 0;
+    let consultasReal = parseInt(creditRows[0].consultas_realizadas) || 0;
     if (limiteDisp <= 0) {
       return res.status(400).json({ error: 'Créditos esgotados para este usuário.' });
     }
     limiteDisp -= 1;
     consultasReal += 1;
     await pool.query(
-      'UPDATE creditos SET limite_disponivel = ?, consultas_realizada = ? WHERE id_user = ?',
+      'UPDATE creditos SET limite_disponivel = ?, consultas_realizadas = ? WHERE id_user = ?',
       [limiteDisp, consultasReal, userId]
     );
-
+    
+    // Verificar cache
     const [cacheRows] = await pool.query(
       `SELECT * FROM consultas_api
        WHERE numero_documento = ? AND numero_beneficio = ?
@@ -189,14 +192,10 @@ app.post('/api/consulta', async (req, res) => {
           nomeArquivo
         ];
         const [dupResult] = await pool.query(duplicateQuery, dupValues);
-        const [newRows] = await pool.query(
-          'SELECT * FROM consultas_api WHERE id = ?',
-          [dupResult.insertId]
-        );
+        const [newRows] = await pool.query('SELECT * FROM consultas_api WHERE id = ?', [dupResult.insertId]);
         newRecord = newRows[0];
       }
     }
-
     if (!newRecord) {
       const apiUrl = 'https://api.ajin.io/v3/query-inss-balances/finder/await';
       const apiKey = process.env.TOKEN_QUALIBANKING || '';
@@ -227,7 +226,6 @@ app.post('/api/consulta', async (req, res) => {
       const dataFinalBeneficio = convertDate(apiData.benefitEndDate);
       const dataConsulta = convertDate(apiData.queryDate);
       const dataRetornoConsulta = convertDate(apiData.queryReturnDate);
-
       const insertQuery = `
         INSERT INTO consultas_api (
           id_usuario,
@@ -300,11 +298,10 @@ app.post('/api/consulta', async (req, res) => {
       const [newRows] = await pool.query('SELECT * FROM consultas_api WHERE id = ?', [result.insertId]);
       newRecord = newRows[0];
     }
-
     return res.json({
       consultas_api: newRecord,
       limite_disponivel: limiteDisp,
-      consultas_realizada: consultasReal
+      consultas_realizadas: consultasReal
     });
   } catch (error) {
     console.error(error);
