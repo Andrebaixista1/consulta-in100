@@ -307,64 +307,11 @@ app.post('/api/consulta', async (req, res) => {
   }
 });
 
-const server = app.listen(0, () => {
-  console.log('Server started');
-});
-
-try {
-  // Simular o ciclo de vida de uma requisição para o Express
-  const req = {
-    method: event.httpMethod,
-    path: event.path,
-    headers: event.headers,
-    query: event.queryStringParameters,
-    body: event.body ? JSON.parse(event.body) : {},
-  };
-  const res = {};
-  res.status = (statusCode) => {
-    res.statusCode = statusCode;
-    return res;
-  };
-  res.json = (data) => {
-    res.body = JSON.stringify(data);
-    return res;
-  };
-  res.send = (body) => {
-    res.body = body;
-    return res;
-  };
-  res.set = (headers) => {
-    res.headers = headers;
-    return res;
-  };
-  // Encontrar o roteador Express para a solicitação
-  await new Promise((resolve, reject) => {
-    app._router.handle(req, res, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-  // Retornar a resposta formatada para Netlify
-  server.close();
-  return {
-    statusCode: res.statusCode || 200,
-    body: res.body,
-    headers: {
-      ...res.headers,
-      'content-type': 'application/json',
-    },
-  };
-} catch (error) {
-  console.error('ERROR:', error);
-  server.close();
-  return {
-    statusCode: 500,
-    body: JSON.stringify({ error: 'Internal Server Error' }),
-    headers: {
-      'content-type': 'application/json',
-    },
-  };
+export default async function handler(req, res) {
+  try {
+    app(req, res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
