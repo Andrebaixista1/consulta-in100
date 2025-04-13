@@ -1,12 +1,11 @@
-toml
 [build]
-  command = "npm run build"
-  publish = "public"
+  command = "npm run build" 
+  publish = "public" 
 
 [functions]
-  directory = "functions"
+  directory = "functions" 
 
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
+  from = "/api/*" 
+  to = "/.netlify/functions/server" 
   status = 200
