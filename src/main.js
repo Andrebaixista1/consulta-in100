@@ -56,12 +56,7 @@ const availableLimitEl = document.getElementById('availableLimit');
 const usedPercentageEl = document.getElementById('usedPercentage');
 const totalCarregadoEl = document.getElementById('totalCarregado');
 
-let limitCount = 50;
-let totalCarregado = 100;
-
-availableLimitEl.textContent = limitCount;
-totalCarregadoEl.textContent = totalCarregado;
-
+// LOGIN
 loginForm.addEventListener('submit', function(e) {
   e.preventDefault();
   const username = document.getElementById('username').value;
@@ -81,9 +76,26 @@ loginForm.addEventListener('submit', function(e) {
       loginError.classList.add('hidden');
       loginScreen.classList.add('hidden');
       dashboardScreen.classList.remove('hidden');
-      queriesCount.textContent = '0';
-      amountSpent.textContent = 'R$ 0,00';
       loggedUserName.textContent = data.login;
+
+      if (data.creditos) {
+        totalCarregadoEl.textContent = data.creditos.total_carregado || 0;
+        availableLimitEl.textContent = data.creditos.limite_disponivel || 0;
+        queriesCount.textContent = data.creditos.consultas_realizada || 0;
+        amountSpent.textContent = 'R$ 0,00';
+
+        let usedPerc = 0;
+        if (data.creditos.total_carregado > 0) {
+          usedPerc = (data.creditos.consultas_realizada / data.creditos.total_carregado) * 100;
+        }
+        usedPercentageEl.textContent = usedPerc.toFixed(2) + '%';
+      } else {
+        totalCarregadoEl.textContent = 0;
+        availableLimitEl.textContent = 0;
+        queriesCount.textContent = 0;
+        usedPercentageEl.textContent = '0%';
+        amountSpent.textContent = 'R$ 0,00';
+      }
     }
   })
   .catch(err => {
@@ -101,6 +113,7 @@ logoutBtn.addEventListener('click', function() {
   loginScreen.classList.remove('hidden');
 });
 
+// CONSULTA
 async function consultarBeneficio(cpf, nb, userLogin) {
   try {
     const response = await fetch('/api/consulta', {
@@ -146,11 +159,27 @@ searchForm.addEventListener('submit', async function(e) {
       resultsError.textContent = 'Nenhum dado encontrado.';
       resultsError.classList.remove('hidden');
     } else {
-      const newCount = parseInt(queriesCount.textContent) + 1;
-      queriesCount.textContent = newCount;
-      amountSpent.textContent = `R$ ${(newCount * 0.05).toFixed(2)}`;
-      const usedPerc = (newCount / limitCount) * 100;
-      usedPercentageEl.textContent = usedPerc.toFixed(2) + '%';
+      // Atualiza tela com novos dados do crédito
+      if (typeof response.limite_disponivel !== 'undefined') {
+        availableLimitEl.textContent = response.limite_disponivel;
+      }
+      if (typeof response.consultas_realizada !== 'undefined') {
+        queriesCount.textContent = response.consultas_realizada;
+      }
+      if (typeof response.total_carregado !== 'undefined') {
+        totalCarregadoEl.textContent = response.total_carregado;
+        let usedPerc = 0;
+        if (response.total_carregado > 0) {
+          usedPerc = (response.consultas_realizada / response.total_carregado) * 100;
+        }
+        usedPercentageEl.textContent = usedPerc.toFixed(2) + '%';
+      }
+      // Atualiza valor gasto fictício
+      const currentSpent = parseFloat(amountSpent.textContent.replace('R$', '').replace(',', '.'));
+      const newSpent = currentSpent + 0.05;
+      amountSpent.textContent = `R$ ${newSpent.toFixed(2)}`;
+
+      // Preenche dados fictícios de benefício
       document.getElementById('benefitNumber').textContent = response.benefitNumber || '-';
       document.getElementById('documentNumber').textContent = response.documentNumber || '-';
       document.getElementById('name').textContent = response.name || '-';
@@ -175,6 +204,7 @@ searchForm.addEventListener('submit', async function(e) {
       document.getElementById('accountNumber').textContent = response.accountNumber || '-';
       document.getElementById('accountDigit').textContent = response.accountDigit || '-';
       document.getElementById('numberOfActiveReservations').textContent = response.numberOfActiveReservations || '0';
+
       resultsSection.classList.remove('hidden');
       showToast('Consulta realizada com sucesso!');
     }
@@ -188,6 +218,7 @@ searchForm.addEventListener('submit', async function(e) {
   }
 });
 
+// Máscaras
 document.getElementById('cpf').addEventListener('input', function(e) {
   let value = e.target.value.replace(/\D/g, '');
   if (value.length > 3) {
