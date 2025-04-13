@@ -1,20 +1,24 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consulta INSS</title>
+  <title>Consulta Vieira - Europa 3.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <style>
     .gradient-bg {
-      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      background: #0B274C;
+    }
+    .bg-blue-600,
+    .bg-blue-700,
+    .bg-blue-800 {
+      background-color: #0B274C !important;
     }
     .card-shadow {
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
     }
     .fade-in {
       animation: fadeIn 0.3s ease-in-out;
@@ -23,65 +27,63 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
+    .logo {
+      height: 220px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .logo-dash {
+      margin-top: -65px;
+      margin-bottom: -65px;
+      height: 150px;
     }
   </style>
 </head>
 <body class="bg-gray-100 font-sans">
+
+  <!-- Login Screen -->
   <div id="loginScreen" class="min-h-screen flex items-center justify-center gradient-bg p-4">
-    <div class="bg-white rounded-lg card-shadow w-full max-w-md overflow-hidden">
-      <div class="bg-blue-800 py-4 px-6">
-        <h1 class="text-white text-2xl font-bold text-center">Consulta INSS</h1>
-      </div>
-      <div class="p-6">
-        <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
-        <form id="loginForm" class="space-y-4">
-          <div>
-            <label for="username" class="block text-gray-700 text-sm font-medium mb-1">Usuário</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-user text-gray-400"></i>
-              </div>
-              <input type="text" id="username" name="username" required
-              class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div class="bg-white rounded-lg card-shadow w-full max-w-md overflow-hidden p-6 flex flex-col items-center">
+      <img src="/projectEuropa.png" alt="Project Europa" class="logo mb-4" />
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Project Europa</h1>
+      <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full"></div>
+      <form id="loginForm" class="space-y-4 w-full">
+        <div>
+          <label for="username" class="block text-gray-700 text-sm font-medium mb-1">Usuário</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-user text-gray-400"></i>
+            </div>
+            <input type="text" id="username" name="username" required
+              class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C]"
               placeholder="Digite seu usuário">
-            </div>
           </div>
-          <div>
-            <label for="password" class="block text-gray-700 text-sm font-medium mb-1">Senha</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-lock text-gray-400"></i>
-              </div>
-              <input type="password" id="password" name="password" required
-              class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        </div>
+        <div>
+          <label for="password" class="block text-gray-700 text-sm font-medium mb-1">Senha</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-lock text-gray-400"></i>
+            </div>
+            <input type="password" id="password" name="password" required
+              class="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C]"
               placeholder="Digite sua senha">
-            </div>
           </div>
-          <div>
-            <button type="submit"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-              Entrar
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        <div>
+          <button type="submit"
+            class="w-full bg-[#0B274C] hover:bg-[#0B274C] text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C] focus:ring-offset-2 transition duration-150 ease-in-out">
+            Entrar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+
+  <!-- Dashboard Screen -->
   <div id="dashboardScreen" class="hidden min-h-screen">
     <header class="bg-white shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex justify-between items-center">
-          <h1 class="text-xl font-bold text-gray-900">Dashboard INSS</h1>
+          <img src="/projectEuropa-horizontal.png" alt="Project Europa" class="logo-dash" />
           <div class="flex items-center gap-4">
             <span id="loggedUserName" class="text-gray-700 font-semibold"></span>
             <button id="logoutBtn" class="text-red-600 hover:text-red-800 flex items-center">
@@ -92,61 +94,61 @@
         </div>
       </div>
     </header>
-    <div class="bg-blue-800 text-white">
+    <div class="bg-[#0B274C] text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div class="bg-blue-700 rounded-lg p-3 shadow">
+          <div class="bg-[#0B274C] rounded-lg p-3 shadow">
             <div class="flex items-center">
-              <div class="p-2 rounded-full bg-blue-600 mr-3">
+              <div class="p-2 rounded-full bg-[#0B274C] mr-3">
                 <i class="fas fa-box"></i>
               </div>
               <div>
-                <p class="text-xs text-blue-200">Total Carregado</p>
-                <p class="font-semibold" id="totalCarregado">100</p>
+                <p class="text-xs text-white">Total Carregado</p>
+                <p class="font-semibold" id="totalCarregado">0</p>
               </div>
             </div>
           </div>
-          <div class="bg-blue-700 rounded-lg p-3 shadow">
+          <div class="bg-[#0B274C] rounded-lg p-3 shadow">
             <div class="flex items-center">
-              <div class="p-2 rounded-full bg-blue-600 mr-3">
+              <div class="p-2 rounded-full bg-[#0B274C] mr-3">
                 <i class="fas fa-wallet"></i>
               </div>
               <div>
-                <p class="text-xs text-blue-200">Limite Disponível</p>
-                <p class="font-semibold" id="availableLimit">50</p>
+                <p class="text-xs text-white">Limite Disponível</p>
+                <p class="font-semibold" id="availableLimit">0</p>
               </div>
             </div>
           </div>
-          <div class="bg-blue-700 rounded-lg p-3 shadow">
+          <div class="bg-[#0B274C] rounded-lg p-3 shadow">
             <div class="flex items-center">
-              <div class="p-2 rounded-full bg-blue-600 mr-3">
+              <div class="p-2 rounded-full bg-[#0B274C] mr-3">
                 <i class="fas fa-search"></i>
               </div>
               <div>
-                <p class="text-xs text-blue-200">Consultas Realizadas</p>
+                <p class="text-xs text-white">Consultas Realizadas</p>
                 <p class="font-semibold" id="queriesCount">0</p>
               </div>
             </div>
           </div>
-          <div class="bg-blue-700 rounded-lg p-3 shadow">
+          <div class="bg-[#0B274C] rounded-lg p-3 shadow">
             <div class="flex items-center">
-              <div class="p-2 rounded-full bg-blue-600 mr-3">
+              <div class="p-2 rounded-full bg-[#0B274C] mr-3">
                 <i class="fas fa-percent"></i>
               </div>
               <div>
-                <p class="text-xs text-blue-200">% Utilizado</p>
-                <p class="font-semibold" id="usedPercentage">0%</p>
+                <p class="text-xs text-white">% Utilizado</p>
+                <p class="font-semibold" id="usedPercentage">0,00%</p>
               </div>
             </div>
           </div>
-          <div class="bg-blue-700 rounded-lg p-3 shadow">
+          <div class="bg-[#0B274C] rounded-lg p-3 shadow">
             <div class="flex items-center">
-              <div class="p-2 rounded-full bg-blue-600 mr-3">
+              <div class="p-2 rounded-full bg-[#0B274C] mr-3">
                 <i class="fas fa-money-bill-wave"></i>
               </div>
               <div>
-                <p class="text-xs text-blue-200">Valor Gasto</p>
-                <p class="font-semibold" id="amountSpent">R$ 0,00</p>
+                <p class="text-xs text-white">Valor Gasto</p>
+                <p class="font-semibold" id="amountSpent">R$ 0</p>
               </div>
             </div>
           </div>
@@ -161,19 +163,18 @@
             <div>
               <label for="cpf" class="block text-sm font-medium text-gray-700">CPF</label>
               <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00"
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0B274C] focus:border-[#0B274C]" />
             </div>
             <div>
               <label for="nb" class="block text-sm font-medium text-gray-700">Número de Benefício (NB)</label>
               <input type="text" id="nb" name="nb" placeholder="123.456.789-0"
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0B274C] focus:border-[#0B274C]" />
             </div>
           </div>
           <div class="flex justify-end">
             <button type="submit"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#0B274C] hover:bg-[#0B274C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0B274C]">
               <span id="searchBtnText">Pesquisar</span>
-              <span id="searchSpinner" class="ml-2 hidden spinner"></span>
             </button>
           </div>
         </form>
@@ -316,6 +317,7 @@
       </div>
     </main>
   </div>
+
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
