@@ -7,6 +7,16 @@ dotenv.config();
 const app = express();
 app.use(express.json());  // Middleware para processar JSON no body das requisições
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
+});
 // Configuração do banco de dados
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
