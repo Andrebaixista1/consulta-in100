@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "start:server": "node server/server.js",
-    "dev:all": "concurrently \"npm run dev\" \"npm run start:server\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run start:server\"",
+    "build": "vite build"
   },
   "dependencies": {
     "axios": "^1.8.4",
