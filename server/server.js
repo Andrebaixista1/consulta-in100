@@ -199,7 +199,7 @@ app.post('/api/consulta', async (req, res) => {
 
     if (!newRecord) {
       const apiUrl = 'https://api.ajin.io/v3/query-inss-balances/finder/await';
-      const apiKey = process.env.API_KEY || '';
+      const apiKey = process.env.TOKEN_QUALIBANKING || '';
       if (!apiKey) {
         return res.status(500).json({ error: 'API key não configurada.' });
       }

@@ -112,6 +112,7 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
+
 // Logout
 logoutBtn.addEventListener('click', () => {
   resultsSection.classList.add('hidden');
@@ -170,9 +171,7 @@ searchForm.addEventListener('submit', async (e) => {
       }
       usedPercentageEl.textContent = usedPerc.toFixed(2).replace('.', ',') + '%';
 
-      const currentSpent = parseInt(amountSpent.textContent.replace('R$', '').replace(/\s/g, ''));
-      const newSpent = currentSpent + 0.05;
-      amountSpent.textContent = `R$ ${newSpent.toFixed(0)}`;
+      amountSpent.textContent = 'R$ 0.00';
 
       const dataApi = response.consultas_api || {};
       document.getElementById('benefitNumber').textContent = dataApi.numero_beneficio || '-';
