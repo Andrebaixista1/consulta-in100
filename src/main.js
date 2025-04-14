@@ -72,7 +72,7 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     loadingOverlay.classList.remove('hidden');
     loading.classList.remove('hidden');
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/login', {
+    const res = await fetch('http://localhost:3000/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login: username, senha: password })
@@ -148,7 +148,7 @@ searchForm.addEventListener('submit', async (e) => {
   resultsError.classList.add('hidden');
 
   try {
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/consulta', {
+    const res = await fetch('http://localhost:3000/api/consulta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf, nb, login: userLogin })
@@ -193,8 +193,8 @@ searchForm.addEventListener('submit', async (e) => {
       document.getElementById('grantDate').textContent = formatDate(dataApi.data_concessao);
       document.getElementById('benefitEndDate').textContent = formatDate(dataApi.data_final_beneficio);
       document.getElementById('creditType').textContent = dataApi.tipo_credito || '-';
-      document.getElementById('benefitCardLimit').textContent = formatCurrency(dataApi.limite_cartao_beneficio);
       document.getElementById('benefitCardBalance').textContent = formatCurrency(dataApi.saldo_cartao_beneficio);
+      document.getElementById('consignedCardBalance').textContent = formatCurrency(dataApi.saldo_cartao_consignado);
       document.getElementById('availableTotalBalance').textContent = formatCurrency(dataApi.saldo_total_disponivel);
       document.getElementById('benefitStatus').textContent = dataApi.situacao_beneficio || '-';
       document.getElementById('legalRepresentativeName').textContent = dataApi.nome_representante_legal || '-';
@@ -202,7 +202,7 @@ searchForm.addEventListener('submit', async (e) => {
       document.getElementById('agencyCode').textContent = dataApi.agencia_desembolso || '-';
       document.getElementById('accountNumber').textContent = dataApi.conta_desembolso || '-';
       document.getElementById('accountDigit').textContent = dataApi.digito_desembolso || '-';
-      document.getElementById('numberOfActiveReservations').textContent = dataApi.numero_portabilidades || '0';
+      document.getElementById('numberOfActiveSuspendedReservations').textContent = dataApi.numero_portabilidades || '0';
 
       resultsSection.classList.remove('hidden');
       showToast('Consulta realizada com sucesso!', 'success');
