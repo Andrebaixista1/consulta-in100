@@ -235,25 +235,18 @@ document.getElementById('cpf').addEventListener('input', (e) => {
 // Máscara NB
 document.getElementById('nb').addEventListener('input', (e) => {
   let numbers = e.target.value.replace(/\D/g, '');
+  console.log("Numbers on input:", numbers);
   if (numbers.length > 10) {
     numbers = numbers.substring(0, 10);
   }
-  if (numbers.length >= 9) {
+  if (numbers.length >= 10) {
     e.target.value =
       numbers.substring(0, 3) + '.' +
       numbers.substring(3, 6) + '.' +
       numbers.substring(6, 9) + '-' +
       numbers.substring(9, 10);
-  } else if (numbers.length >= 6) {
-    e.target.value =
-      numbers.substring(0, 3) + '.' +
-      numbers.substring(3, 6) + '.' +
-      numbers.substring(6);
-  } else if (numbers.length >= 3) {
-    e.target.value =
-      numbers.substring(0, 3) + '.' +
-      numbers.substring(3);
   } else {
     e.target.value = numbers;
   }
+  console.log("NB value:", e.target.value);
 });
