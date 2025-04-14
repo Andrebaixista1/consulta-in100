@@ -45,7 +45,11 @@
       margin-bottom: -65px;
       height: 150px;
     }
+    .animate-pulse-fast {
+      animation: pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
   </style>
+  <script>setTimeout(() => {location.reload()}, 1)</script>
 </head>
 <body class="bg-gray-100 font-sans">
 
@@ -85,7 +89,7 @@
           </button>
           <div id="loading-overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black opacity-50 z-50"></div>
           <div id="loading" class="hidden fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-            <img src="/src/europa_animacao.gif" alt="Carregando" class="h-24 w-24">
+            <img src="/src/europa_animacao.gif" alt="Carregando" class="h-24 w-24 animate-pulse-fast">
           </div>
         </div>
       </form>
@@ -174,14 +178,14 @@
         <h2 class="text-lg font-medium text-gray-900 mb-4">Consulta de Benefício</h2>
         <form id="searchForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div class="fade-in">
               <label for="cpf" class="block text-sm font-medium text-gray-700">CPF</label>
               <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0B274C] focus:border-[#0B274C]" />
             </div>
-            <div>
+            <div class="fade-in">
               <label for="nb" class="block text-sm font-medium text-gray-700">Número de Benefício (NB)</label>
-              <input type="text" id="nb" name="nb" placeholder="123.456.789-0"
+              <input type="text" id="nb" name="nb" placeholder="123.456.789-0" maxlength="12"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[#0B274C] focus:border-[#0B274C]" />
             </div>
           </div>
