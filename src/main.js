@@ -45,6 +45,8 @@ function showToast(message, type = 'success') {
     }
   }).showToast();
 }
+const loading = document.getElementById('loading');
+const loadingOverlay = document.getElementById('loading-overlay');
 
 const loginScreen = document.getElementById('loginScreen');
 const dashboardScreen = document.getElementById('dashboardScreen');
@@ -68,6 +70,8 @@ loginForm.addEventListener('submit', async (e) => {
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
   try {
+    loadingOverlay.classList.remove('hidden');
+    loading.classList.remove('hidden');
     const res = await fetch('https://api-consulta-in-100.vercel.app/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,6 +113,10 @@ loginForm.addEventListener('submit', async (e) => {
     loginError.classList.remove('hidden');
     showToast('Erro no login.', 'error');
     console.error(err);
+  }
+  finally{
+    loadingOverlay.classList.add('hidden');
+    loading.classList.add('hidden');
   }
 });
 
