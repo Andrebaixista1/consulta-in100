@@ -72,7 +72,7 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     loadingOverlay.classList.remove('hidden');
     loading.classList.remove('hidden');
-    const res = await fetch('http://localhost:3000/api/login', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app//api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login: username, senha: password })
@@ -148,7 +148,7 @@ searchForm.addEventListener('submit', async (e) => {
   resultsError.classList.add('hidden');
 
   try {
-    const res = await fetch('http://localhost:3000/api/consulta', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app//api/consulta', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf, nb, login: userLogin })
