@@ -19,14 +19,12 @@ function calculateAge(birthDate) {
   return age;
 }
 
-function formatCurrency(value) {
+function formatNumberWithCommas(value) {
   if (value === null || value === undefined) return '-';
-  return Number(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+    return Number(value).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 function formatBoolean(value) {
@@ -309,9 +307,9 @@ searchForm.addEventListener('submit', async (e) => {
       document.getElementById('grantDate').textContent = formatDate(dataApi.data_concessao);
       document.getElementById('benefitEndDate').textContent = formatDate(dataApi.data_final_beneficio);
       document.getElementById('creditType').textContent = dataApi.tipo_credito || '-';
-      document.getElementById('benefitCardBalance').textContent = formatCurrency(dataApi.saldo_cartao_beneficio);
-      document.getElementById('consignedCardBalance').textContent = formatCurrency(dataApi.saldo_cartao_consignado);
-      document.getElementById('consignedCreditBalance').textContent = formatCurrency(dataApi.saldo_credito_consignado);
+      document.getElementById('benefitCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_beneficio);
+      document.getElementById('consignedCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_consignado);
+      document.getElementById('consignedCreditBalance').textContent = formatNumberWithCommas(dataApi.saldo_credito_consignado);
       document.getElementById('benefitStatus').textContent = dataApi.situacao_beneficio || '-';
       document.getElementById('legalRepresentativeName').textContent = dataApi.nome_representante_legal || '-';
       document.getElementById('bankInfo').textContent = dataApi.banco_desembolso || '-';
