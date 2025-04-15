@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,51 +14,79 @@
     .gradient-bg {
       background: #0B274C;
     }
+
     .bg-blue-600,
     .bg-blue-700,
     .bg-blue-800 {
       background-color: #0B274C !important;
     }
+
     .card-shadow {
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
+
     .fade-in {
       animation: fadeIn 0.3s ease-in-out;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
+
     .animate-spin {
-        animation: spin 1s linear infinite;
+      animation: spin 1s linear infinite;
     }
+
     #loading-overlay {
-        z-index: 40; /* Below modal overlay */
+      z-index: 40;
+      /* Below modal overlay */
     }
+
     .logo {
-        height: 220px;
-        }
+      height: 220px;
+    }
+
     .logo-dash {
       margin-top: -65px;
       margin-bottom: -65px;
       height: 150px;
     }
+
     .animate-pulse-fast {
       animation: pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
+
     /* Modal Styles */
     .modal-overlay {
-        z-index: 50; /* Above everything except the modal itself */
+      z-index: 50;
+      /* Above everything except the modal itself */
     }
+
     .modal-container {
-        z-index: 60; /* Highest */
+      z-index: 60;
+      /* Highest */
     }
   </style>
 </head>
+
 <body class="bg-gray-100 font-sans">
 
 
@@ -66,7 +95,8 @@
     <div class="bg-white rounded-lg card-shadow w-full max-w-md overflow-hidden p-6 flex flex-col items-center">
       <img src="/projectEuropa.png" alt="Project Europa" class="logo mb-4" />
       <!-- <h1 class="text-2xl font-bold text-gray-800 mb-6">Project Europa</h1> -->
-      <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full"></div>
+      <div id="loginError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full">
+      </div>
       <form id="loginForm" class="space-y-4 w-full">
         <div>
           <label for="username" class="block text-gray-700 text-sm font-medium mb-1">Usuário</label>
@@ -114,13 +144,16 @@
             <span id="loggedUserName" class="text-gray-700 font-semibold"></span>
             <!-- Admin Dropdown - Hidden by default -->
             <div id="adminDropdownContainer" class="relative hidden">
-                <button id="adminDropdownToggle" class="text-gray-600 hover:text-gray-800 focus:outline-none">
-                    <i class="fas fa-cog"></i> <!-- Gear icon or similar -->
-                </button>
-                <div id="adminDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                    <a href="#" id="loadCreditBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Carregar Credito</a>
-                    <a href="#" id="registerUserBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Usuario</a>
-                </div>
+              <button id="adminDropdownToggle" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                <i class="fas fa-cog"></i> <!-- Gear icon or similar -->
+              </button>
+              <div id="adminDropdownMenu"
+                class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                <a href="#" id="loadCreditBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Carregar
+                  Credito</a>
+                <a href="#" id="registerUserBtn"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Usuario</a>
+              </div>
             </div>
             <button id="logoutBtn" class="text-red-600 hover:text-red-800 flex items-center">
               <i class="fas fa-sign-out-alt mr-2"></i>
@@ -362,7 +395,8 @@
     <!-- Modal Content -->
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative modal-container fade-in">
       <h3 class="text-lg font-medium text-gray-900 mb-4">Cadastrar Novo Usuário</h3>
-      <div id="registerUserError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full"></div>
+      <div id="registerUserError"
+        class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full"></div>
       <form id="registerUserForm" class="space-y-4">
         <div>
           <label for="registerName" class="block text-gray-700 text-sm font-medium mb-1">Nome</label>
@@ -391,17 +425,20 @@
             class="px-4 py-2 bg-[#0B274C] text-white rounded-md hover:bg-[#0a2240] focus:outline-none focus:ring-2 focus:ring-[#0B274C] focus:ring-offset-2">
             Salvar
           </button>
-           <div id="registerLoading" class="hidden items-center justify-center pl-2">
-                <i class="fas fa-spinner fa-spin text-[#0B274C]"></i> <!-- Loading spinner -->
-           </div>
+          <div id="registerLoading" class="hidden items-center justify-center pl-2">
+            <i class="fas fa-spinner fa-spin text-[#0B274C]"></i> <!-- Loading spinner -->
+          </div>
         </div>
       </form>
     </div>
   </div>
 
   <footer class="text-center p-4 text-gray-500 text-sm">
-    &copy; Todos os direitos reservados | Criado e Desenvolvido por André Felipe | Baseado no SysAnd v5.1 & Firebase Studio <img src="public/firebase-icon.png" alt="Firebase Studio Icon" class="inline-block ml-1 w-4 h-4 align-middle">
+    &copy; Todos os direitos reservados | Criado e Desenvolvido por André Felipe | Baseado no SysAnd v5.1 & Firebase
+    Studio <img src="public/firebase-icon.png" alt="Firebase Studio Icon" class="inline-block ml-1 w-4 h-4 align-middle"
+      style="margin-bottom: 2px;">
   </footer>
   <script type="module" src="./src/main.js"></script>
 </body>
+
 </html>
