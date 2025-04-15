@@ -99,16 +99,46 @@ function closeRegisterModal() {
 
 // --- Event Listeners ---
 
+// --- Funções auxiliares para criptografia ---
+function b64DecodeUnicode(str) {
+  return decodeURIComponent(atob(str).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
+
+function tryDecrypt(password) {
+  try {
+    // Assume que a senha criptografada é base64
+    const decrypted = b64DecodeUnicode(password);
+    // Se decifrou sem erros, retorna a senha decifrada
+    return decrypted;
+  } catch (e) {
+    // Se falhar a decifrar (não é base64), retorna null
+    return null;
+  }
+}
+
+
 // Login
 loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+    e.preventDefault();
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
   try {
     loadingOverlay.classList.remove('hidden');
     loading.classList.remove('hidden');
     const res = await fetch('https://api-consulta-in-100.vercel.app/api/login', {
-      method: 'POST',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ login: username, senha: password }),
+      });
+
+      let data = await res.json();
+
+      if (data.senha_criptografada) {
+          const decryptedPassword = tryDecrypt(data.senha_criptografada);
+          data.senha = decryptedPassword || password;
+      }
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login: username, senha: password })
     });
@@ -131,8 +161,7 @@ loginForm.addEventListener('submit', async (e) => {
       }
       // Garante que o menu esteja escondido ao logar
       adminDropdownMenu.classList.add('hidden');
-
-
+  
       if (data.creditos) {
         totalCarregadoEl.textContent = parseInt(data.creditos.total_carregado) || 0;
         availableLimitEl.textContent = parseInt(data.creditos.limite_disponivel) || 0;
