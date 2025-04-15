@@ -92,7 +92,7 @@ const changePasswordForm = document.getElementById('changePasswordForm');
 const changePasswordLogin = document.getElementById('changePasswordLogin');
 const changePasswordNewPassword = document.getElementById('newPassword');
 const confirmNewPassword = document.getElementById('confirmNewPassword');
-const saveChangePasswordBtn = document.getElementById('saveChangePasswordBtn');
+const changePasswordSubmitBtn = document.getElementById('changePasswordSubmitBtn');
 const changePasswordError = document.getElementById('changePasswordError');
 const changePasswordLoading = document.getElementById('changePasswordLoading');
 
@@ -473,56 +473,52 @@ changePasswordForm.addEventListener('submit', async (e) => {
 
   const login = changePasswordLogin.value.trim();
   const newPassword = changePasswordNewPassword.value;
-  const confirmPassword = confirmNewPassword.value;
 
-  // Validação no frontend (opcional, mas recomendado)
-  if (!login || !newPassword || !confirmPassword) {
+  // Log para depuração
+  console.log('Alterar Senha - login:', login, 'novaSenha:', newPassword);
+
+  if (!login || !newPassword) {
     changePasswordError.textContent = 'Por favor, preencha todos os campos.';
     changePasswordError.classList.remove('hidden');
     showToast('Preencha todos os campos.', 'error');
     return;
   }
 
-  if (newPassword !== confirmPassword) {
-    changePasswordError.textContent = 'As senhas não conferem.';
-    changePasswordError.classList.remove('hidden');
-    showToast('As senhas não conferem.', 'error');
-    return;
-  }
-
   changePasswordError.classList.add('hidden');
-  changePasswordLoading.classList.remove('hidden');
-  saveChangePasswordBtn.disabled = true;
+  document.getElementById('changePasswordBtnText').classList.add('hidden');
+  document.getElementById('changePasswordLoading').classList.remove('hidden');
+  changePasswordSubmitBtn.disabled = true;
 
-    try {
-        const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ login, novaSenha: newPassword }), // Use 'novaSenha' to match backend
-        });
+  try {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ login, novaSenha: newPassword }),
+    });
 
-        const data = await res.json();
+    const data = await res.json();
 
-        if (!res.ok) {
-            let errorMsg = 'Erro ao alterar a senha';
-            if (data && data.error) {
-                errorMsg = data.error;
-            } else if (res.statusText) {
-                errorMsg = `Erro ${res.status}: ${res.statusText}`;
-            }
-            throw new Error(errorMsg);
-        }
-
-        showToast(data.message || 'Senha alterada com sucesso!', 'success');
-        closeChangePasswordModal();
-    } catch (error) {
-        changePasswordError.textContent = error.message || 'Erro ao alterar a senha. Tente novamente.';
-        changePasswordError.classList.remove('hidden');
-        showToast(error.message || 'Erro ao alterar a senha.', 'error');
-    } finally {
-        changePasswordLoading.classList.add('hidden');
-        saveChangePasswordBtn.disabled = false;
+    if (!res.ok) {
+      let errorMsg = 'Erro ao alterar a senha';
+      if (data && data.error) {
+        errorMsg = data.error;
+      } else if (res.statusText) {
+        errorMsg = `Erro ${res.status}: ${res.statusText}`;
+      }
+      throw new Error(errorMsg);
     }
+
+    showToast(data.message || 'Senha alterada com sucesso!', 'success');
+    closeChangePasswordModal();
+  } catch (error) {
+    changePasswordError.textContent = error.message || 'Erro ao alterar a senha. Tente novamente.';
+    changePasswordError.classList.remove('hidden');
+    showToast(error.message || 'Erro ao alterar a senha.', 'error');
+  } finally {
+    document.getElementById('changePasswordBtnText').classList.remove('hidden');
+    document.getElementById('changePasswordLoading').classList.add('hidden');
+    changePasswordSubmitBtn.disabled = false;
+  }
 });
