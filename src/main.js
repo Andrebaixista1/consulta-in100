@@ -120,7 +120,7 @@ function tryDecrypt(password) {
 
 
 // Login
-loginForm.addEventListener('submit', async (e) => {
+loginForm.addEventListener('submit', async (e) => { 
     e.preventDefault();
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
@@ -133,16 +133,8 @@ loginForm.addEventListener('submit', async (e) => {
           body: JSON.stringify({ login: username, senha: password }),
       });
 
-      let data = await res.json();
-
-      if (data.senha_criptografada) {
-          const decryptedPassword = tryDecrypt(data.senha_criptografada);
-          data.senha = decryptedPassword || password;
-      }
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login: username, senha: password })
-    });
     const data = await res.json();
+
     if (data.error) {
       loginError.textContent = data.error;
       loginError.classList.remove('hidden');
