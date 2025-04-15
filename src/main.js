@@ -82,6 +82,20 @@ const registerPasswordInput = document.getElementById('registerPassword');
 const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
 const saveRegisterBtn = document.getElementById('saveRegisterBtn');
 const registerUserError = document.getElementById('registerUserError');
+
+// --- Elementos do Modal de Alterar Senha ---
+const changePasswordBtn = document.getElementById('changePasswordBtn');
+const changePasswordModal = document.getElementById('changePasswordModal');
+const changePasswordOverlay = document.getElementById('changePasswordOverlay');
+const cancelChangePasswordBtn = document.getElementById('cancelChangePasswordBtn');
+const changePasswordForm = document.getElementById('changePasswordForm');
+const changePasswordLogin = document.getElementById('changePasswordLogin');
+const changePasswordNewPassword = document.getElementById('newPassword');
+const confirmNewPassword = document.getElementById('confirmNewPassword');
+const saveChangePasswordBtn = document.getElementById('saveChangePasswordBtn');
+const changePasswordError = document.getElementById('changePasswordError');
+const changePasswordLoading = document.getElementById('changePasswordLoading');
+
 const registerLoading = document.getElementById('registerLoading');
 
 // --- Funções Auxiliares Modal ---
@@ -95,6 +109,19 @@ function openRegisterModal() {
 
 function closeRegisterModal() {
     registerUserModal.classList.add('hidden');
+}
+
+// --- Funções Auxiliares Modal Alterar Senha ---
+function openChangePasswordModal() {
+  changePasswordForm.reset();
+  changePasswordError.classList.add('hidden');
+  changePasswordLoading.classList.add('hidden');
+  saveChangePasswordBtn.disabled = false;
+  changePasswordModal.classList.remove('hidden');
+}
+
+function closeChangePasswordModal() {
+  changePasswordModal.classList.add('hidden');
 }
 
 // --- Event Listeners ---
@@ -425,5 +452,77 @@ registerUserForm.addEventListener('submit', async (e) => {
     } finally {
         registerLoading.classList.add('hidden'); // Esconde loading
         saveRegisterBtn.disabled = false; // Reabilita botão salvar
+    }
+});
+
+// --- Event Listeners Modal Alterar Senha ---
+changePasswordBtn.addEventListener('click', () => {
+  openChangePasswordModal();
+});
+
+cancelChangePasswordBtn.addEventListener('click', () => {
+  closeChangePasswordModal();
+});
+
+changePasswordOverlay.addEventListener('click', () => {
+  closeChangePasswordModal();
+});
+
+changePasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const login = changePasswordLogin.value.trim();
+  const newPassword = changePasswordNewPassword.value;
+  const confirmPassword = confirmNewPassword.value;
+
+  // Validação no frontend (opcional, mas recomendado)
+  if (!login || !newPassword || !confirmPassword) {
+    changePasswordError.textContent = 'Por favor, preencha todos os campos.';
+    changePasswordError.classList.remove('hidden');
+    showToast('Preencha todos os campos.', 'error');
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    changePasswordError.textContent = 'As senhas não conferem.';
+    changePasswordError.classList.remove('hidden');
+    showToast('As senhas não conferem.', 'error');
+    return;
+  }
+
+  changePasswordError.classList.add('hidden');
+  changePasswordLoading.classList.remove('hidden');
+  saveChangePasswordBtn.disabled = true;
+
+    try {
+        const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ login, novaSenha: newPassword }), // Use 'novaSenha' to match backend
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            let errorMsg = 'Erro ao alterar a senha';
+            if (data && data.error) {
+                errorMsg = data.error;
+            } else if (res.statusText) {
+                errorMsg = `Erro ${res.status}: ${res.statusText}`;
+            }
+            throw new Error(errorMsg);
+        }
+
+        showToast(data.message || 'Senha alterada com sucesso!', 'success');
+        closeChangePasswordModal();
+    } catch (error) {
+        changePasswordError.textContent = error.message || 'Erro ao alterar a senha. Tente novamente.';
+        changePasswordError.classList.remove('hidden');
+        showToast(error.message || 'Erro ao alterar a senha.', 'error');
+    } finally {
+        changePasswordLoading.classList.add('hidden');
+        saveChangePasswordBtn.disabled = false;
     }
 });
