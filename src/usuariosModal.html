@@ -1,0 +1,14 @@
+<!-- Modal Usuários -->
+<div id="usuariosModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+  <div id="usuariosOverlay" class="absolute inset-0 bg-black opacity-60 modal-overlay"></div>
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl relative modal-container fade-in">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Usuários</h3>
+    <button id="fecharUsuariosModal" class="absolute top-4 right-4 px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 focus:outline-none">Fechar</button>
+    <div class="overflow-x-auto">
+      <table id="usuariosTable" class="min-w-full divide-y divide-gray-200 text-xs md:text-sm">
+        <thead><tr id="usuariosTableHead"></tr></thead>
+        <tbody id="usuariosTableBody"><tr><td colspan="100%">Carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -66,7 +66,7 @@ const totalCarregadoEl = document.getElementById('totalCarregado');
 // --- Elementos do Dropdown Admin ---
 const adminDropdownContainer = document.getElementById('adminDropdownContainer');
 const adminDropdownToggle = document.getElementById('adminDropdownToggle');
-const adminDropdownMenu = document.getElementById('adminDropdownMenu');
+
 const loadCreditBtn = document.getElementById('loadCreditBtn');
 
 // --- Elementos do Modal de Carregar Crédito ---
@@ -136,6 +136,125 @@ function openChangePasswordModal() {
 function closeChangePasswordModal() {
   changePasswordModal.classList.add('hidden');
 }
+
+// --- Usuários e Recargas Modal Dinâmico ---
+const usuariosBtn = document.getElementById('usuariosBtn');
+const recargasBtn = document.getElementById('recargasBtn');
+const usuariosModal = document.getElementById('usuariosModal');
+const recargasModal = document.getElementById('recargasModal');
+const usuariosOverlay = document.getElementById('usuariosOverlay');
+const recargasOverlay = document.getElementById('recargasOverlay');
+const fecharUsuariosModal = document.getElementById('fecharUsuariosModal');
+const fecharRecargasModal = document.getElementById('fecharRecargasModal');
+
+
+// Utilitário para montar tabela dinâmica
+function renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState) {
+  if (!Array.isArray(data) || data.length === 0) {
+    tableHeadEl.innerHTML = '';
+    tableBodyEl.innerHTML = '<tr><td colspan="100%">Nenhum dado encontrado.</td></tr>';
+    return;
+  }
+  const columns = Object.keys(data[0]);
+  // Cabeçalho com ordenação
+  tableHeadEl.innerHTML = columns.map(col => `
+    <th class="px-4 py-2 cursor-pointer whitespace-nowrap" data-col="${col}">
+      ${col} ${sortState.col === col ? (sortState.dir === 'asc' ? '▲' : '▼') : ''}
+    </th>`).join('');
+  // Corpo
+  let sorted = [...data];
+  if (sortState.col) {
+    sorted.sort((a, b) => {
+      let valA = a[sortState.col];
+      let valB = b[sortState.col];
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+      if (valA < valB) return sortState.dir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortState.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+  tableBodyEl.innerHTML = sorted.map(row =>
+    `<tr>${columns.map(col => {
+      let value = row[col];
+      if (col === 'data_criacao' || col === 'ultimo_log') {
+        value = value ? new Date(value).toLocaleDateString('pt-BR') : '-';
+      }
+      if (col === 'senha') {
+        value = value === '0' ? '0' : '***';
+      }
+      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+  // Eventos de ordenação
+  tableHeadEl.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-col');
+      if (sortState.col === col) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'asc';
+      }
+      renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState);
+    });
+  });
+}
+
+// Usuários
+let usuariosSort = { col: '', dir: 'asc' };
+usuariosBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  adminDropdownMenu.classList.add('hidden');
+  usuariosModal.classList.remove('hidden');
+  const tableHead = document.getElementById('usuariosTableHead');
+  const tableBody = document.getElementById('usuariosTableBody');
+  tableBody.innerHTML = '<tr><td colspan="100%">Carregando...</td></tr>';
+  try {
+    const res = await fetch('/api/usuarios');
+    let data = [];
+    // Só tenta ler JSON se houver body e status OK
+    if (res.ok) {
+      const text = await res.text();
+      if (text) {
+        data = JSON.parse(text);
+      }
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="100%">Nenhum usuário encontrado.</td></tr>';
+      tableHead.innerHTML = '';
+      return;
+    }
+    usuariosSort = { col: Object.keys(data[0]||{})[0]||'', dir: 'asc' };
+    renderDynamicTable(data, tableHead, tableBody, usuariosSort);
+  } catch (err) {
+    tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar usuários: ${err.message}</td></tr>`;
+    tableHead.innerHTML = '';
+  }
+});
+if (fecharUsuariosModal) fecharUsuariosModal.addEventListener('click', () => usuariosModal.classList.add('hidden'));
+if (usuariosOverlay) usuariosOverlay.addEventListener('click', () => usuariosModal.classList.add('hidden'));
+
+// Recargas
+let recargasSort = { col: '', dir: 'asc' };
+recargasBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  adminDropdownMenu.classList.add('hidden');
+  recargasModal.classList.remove('hidden');
+  const tableHead = document.getElementById('recargasTableHead');
+  const tableBody = document.getElementById('recargasTableBody');
+  tableBody.innerHTML = '<tr><td colspan="100%">Carregando...</td></tr>';
+  try {
+    const res = await fetch('/api/creditos');
+    const data = await res.json();
+    recargasSort = { col: Object.keys(data[0]||{})[0]||'', dir: 'asc' };
+    renderDynamicTable(data, tableHead, tableBody, recargasSort);
+  } catch (err) {
+    tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar recargas: ${err.message}</td></tr>`;
+  }
+});
+if (fecharRecargasModal) fecharRecargasModal.addEventListener('click', () => recargasModal.classList.add('hidden'));
+if (recargasOverlay) recargasOverlay.addEventListener('click', () => recargasModal.classList.add('hidden'));
 
 // --- Event Listeners ---
 
