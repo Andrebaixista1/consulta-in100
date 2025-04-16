@@ -454,9 +454,15 @@
         </div>
         <div>
           <label for="registerPassword" class="block text-gray-700 text-sm font-medium mb-1">Senha</label>
-          <input type="password" id="registerPassword" name="registerPassword" required
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C]"
-            placeholder="Senha">
+          <div class="relative">
+            <input type="password" id="registerPassword" name="registerPassword" required
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C] pr-10"
+              placeholder="Senha">
+            <button type="button" id="toggleRegisterPassword" tabindex="-1"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 focus:outline-none">
+              <i id="registerPasswordEye" class="fa fa-eye"></i>
+            </button>
+          </div>
         </div>
         <div class="flex justify-end gap-3 pt-4">
           <button type="button" id="cancelRegisterBtn"
@@ -469,6 +475,56 @@
           </button>
           <div id="registerLoading" class="hidden items-center justify-center pl-2">
             <i class="fas fa-spinner fa-spin text-[#0B274C]"></i> <!-- Loading spinner -->
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Carregar Crédito -->
+  <div id="loadCreditModal" class="fixed inset-0 flex items-center justify-center hidden">
+    <!-- Overlay -->
+    <div id="loadCreditOverlay" class="absolute inset-0 bg-black opacity-60 modal-overlay"></div>
+
+    <!-- Modal Content -->
+    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative modal-container fade-in">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Carregar Crédito</h3>
+      <div id="loadCreditError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 w-full"></div>
+      <form id="loadCreditForm" class="space-y-4">
+        <div>
+          <label for="userSelect" class="block text-gray-700 text-sm font-medium mb-1">Selecione o Usuário</label>
+          <select id="userSelect" name="userSelect" required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C]">
+            <option value="">Carregando usuários...</option>
+          </select>
+        </div>
+        <div id="userInfoFields" class="space-y-2 hidden">
+          <div>
+            <label class="block text-gray-700 text-xs font-medium">ID</label>
+            <div id="userIdLabel" class="text-sm font-semibold text-gray-900 bg-gray-100 rounded px-2 py-1"></div>
+          </div>
+          <div>
+            <label class="block text-gray-700 text-xs font-medium">Nome</label>
+            <div id="userNameLabel" class="text-sm font-semibold text-gray-900 bg-gray-100 rounded px-2 py-1"></div>
+          </div>
+        </div>
+        <div>
+          <label for="creditAmount" class="block text-gray-700 text-sm font-medium mb-1">Valor do Crédito</label>
+          <input type="number" id="creditAmount" name="creditAmount" required min="1" step="1"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0B274C]"
+            placeholder="Digite o valor">
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" id="cancelLoadCreditBtn"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            Cancelar
+          </button>
+          <button type="submit" id="saveLoadCreditBtn"
+            class="px-4 py-2 bg-[#0B274C] text-white rounded-md hover:bg-[#0a2240] focus:outline-none focus:ring-2 focus:ring-[#0B274C] focus:ring-offset-2">
+            Carregar
+          </button>
+          <div id="loadCreditLoading" class="hidden items-center justify-center pl-2">
+            <i class="fas fa-spinner fa-spin text-[#0B274C]"></i>
           </div>
         </div>
       </form>

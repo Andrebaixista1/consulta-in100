@@ -68,6 +68,17 @@ const adminDropdownContainer = document.getElementById('adminDropdownContainer')
 const adminDropdownToggle = document.getElementById('adminDropdownToggle');
 const adminDropdownMenu = document.getElementById('adminDropdownMenu');
 const loadCreditBtn = document.getElementById('loadCreditBtn');
+
+// --- Elementos do Modal de Carregar Crédito ---
+const loadCreditModal = document.getElementById('loadCreditModal');
+const loadCreditOverlay = document.getElementById('loadCreditOverlay');
+const loadCreditForm = document.getElementById('loadCreditForm');
+const userSelect = document.getElementById('userSelect');
+const creditAmount = document.getElementById('creditAmount');
+const cancelLoadCreditBtn = document.getElementById('cancelLoadCreditBtn');
+const saveLoadCreditBtn = document.getElementById('saveLoadCreditBtn');
+const loadCreditError = document.getElementById('loadCreditError');
+const loadCreditLoading = document.getElementById('loadCreditLoading');
 const registerUserBtn = document.getElementById('registerUserBtn');
 
 // --- Elementos do Modal de Cadastro ---
@@ -76,7 +87,7 @@ const modalOverlay = document.getElementById('modalOverlay');
 const registerUserForm = document.getElementById('registerUserForm');
 const registerNameInput = document.getElementById('registerName');
 const registerLoginInput = document.getElementById('registerLogin');
-const registerPasswordInput = document.getElementById('registerPassword');
+
 const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
 const saveRegisterBtn = document.getElementById('saveRegisterBtn');
 const registerUserError = document.getElementById('registerUserError');
@@ -171,7 +182,7 @@ loginForm.addEventListener('submit', async (e) => {
       loggedUserName.textContent = data.login;
 
       // Lógica para mostrar/esconder o dropdown do admin
-      if (data.login === 'andrefelipe') {
+      if (data.login === 'andrefelipe' || data.login === 'admin') {
         adminDropdownContainer.classList.remove('hidden');
       } else {
         adminDropdownContainer.classList.add('hidden');
@@ -378,10 +389,8 @@ document.addEventListener('click', (event) => {
 
 loadCreditBtn.addEventListener('click', (e) => {
   e.preventDefault();
-  console.log('Clicou em Carregar Credito');
-  showToast('Funcionalidade "Carregar Credito" ainda não implementada.');
   adminDropdownMenu.classList.add('hidden');
-  // TODO: Implementar modal/lógica para carregar crédito
+  openLoadCreditModal();
 });
 
 // --- Modal Cadastro Usuário ---
@@ -518,5 +527,136 @@ changePasswordForm.addEventListener('submit', async (e) => {
     document.getElementById('changePasswordBtnText').classList.remove('hidden');
     document.getElementById('changePasswordLoading').classList.add('hidden');
     changePasswordSubmitBtn.disabled = false;
+  }
+});
+
+// --- Mostrar/Ocultar Senha no Cadastro de Usuário ---
+document.addEventListener('DOMContentLoaded', function () {
+  const registerPasswordInput = document.getElementById('registerPassword');
+  const toggleRegisterPasswordBtn = document.getElementById('toggleRegisterPassword');
+  const registerPasswordEye = document.getElementById('registerPasswordEye');
+
+  if (toggleRegisterPasswordBtn && registerPasswordInput && registerPasswordEye) {
+    toggleRegisterPasswordBtn.addEventListener('click', () => {
+      const isPassword = registerPasswordInput.type === 'password';
+      registerPasswordInput.type = isPassword ? 'text' : 'password';
+      registerPasswordEye.classList.toggle('fa-eye', !isPassword);
+      registerPasswordEye.classList.toggle('fa-eye-slash', isPassword);
+    });
+  }
+});
+
+// --- Funções Auxiliares Modal Carregar Crédito ---
+let usuariosData = [];
+
+async function openLoadCreditModal() {
+  loadCreditModal.classList.remove('hidden');
+  loadCreditError.classList.add('hidden');
+  loadCreditForm.reset();
+  document.getElementById('userInfoFields').classList.add('hidden');
+  document.getElementById('userIdLabel').textContent = '';
+  document.getElementById('userNameLabel').textContent = '';
+
+  // Carregar lista de usuários
+  try {
+    const response = await fetch('https://api-consulta-in-100.vercel.app/api/userlogins');
+    if (!response.ok) throw new Error('Erro ao carregar usuários');
+    
+    const data = await response.json();
+    usuariosData = data; // Salva todos os dados para lookup posterior
+    // Preencher o select com os logins únicos
+    userSelect.innerHTML = '<option value="">Selecione um usuário</option>' +
+      data.map(user => `<option value="${user.login}">${user.login}</option>`).join('');
+  } catch (error) {
+    console.error('Erro ao carregar usuários:', error);
+    showToast('Erro ao carregar lista de usuários', 'error');
+  }
+}
+
+function closeLoadCreditModal() {
+  loadCreditModal.classList.add('hidden');
+  loadCreditError.classList.add('hidden');
+  loadCreditForm.reset();
+  document.getElementById('userInfoFields').classList.add('hidden');
+  document.getElementById('userIdLabel').textContent = '';
+  document.getElementById('userNameLabel').textContent = '';
+}
+
+// Mostrar ID e Nome ao selecionar usuário
+userSelect.addEventListener('change', () => {
+  const login = userSelect.value;
+  const user = usuariosData.find(u => u.login === login);
+  if (user) {
+    document.getElementById('userIdLabel').textContent = user.id;
+    document.getElementById('userNameLabel').textContent = user.nome || '-';
+    document.getElementById('userInfoFields').classList.remove('hidden');
+  } else {
+    document.getElementById('userInfoFields').classList.add('hidden');
+    document.getElementById('userIdLabel').textContent = '';
+    document.getElementById('userNameLabel').textContent = '';
+  }
+});
+
+// --- Event Listeners Modal Carregar Crédito ---
+loadCreditBtn.addEventListener('click', () => {
+  openLoadCreditModal();
+});
+
+cancelLoadCreditBtn.addEventListener('click', () => {
+  closeLoadCreditModal();
+});
+
+loadCreditOverlay.addEventListener('click', () => {
+  closeLoadCreditModal();
+});
+
+loadCreditForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const login = userSelect.value.trim();
+  const user = usuariosData.find(u => u.login === login);
+  const amount = parseInt(creditAmount.value);
+
+  if (!user || !user.id || !login || !amount) {
+    loadCreditError.textContent = 'Por favor, selecione um usuário e informe o valor.';
+    loadCreditError.classList.remove('hidden');
+    showToast('Preencha todos os campos.', 'error');
+    return;
+  }
+
+  loadCreditError.classList.add('hidden');
+  loadCreditLoading.classList.remove('hidden');
+  saveLoadCreditBtn.disabled = true;
+
+  try {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/carregar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id_user: user.id, login, total_carregado: amount }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      let errorMsg = 'Erro ao carregar crédito';
+      if (data && data.error) {
+        errorMsg = data.error;
+      } else if (res.statusText) {
+        errorMsg = `Erro ${res.status}: ${res.statusText}`;
+      }
+      throw new Error(errorMsg);
+    }
+
+    showToast(data.message || 'Crédito carregado com sucesso!', 'success');
+    closeLoadCreditModal();
+  } catch (error) {
+    loadCreditError.textContent = error.message || 'Erro ao carregar crédito. Tente novamente.';
+    loadCreditError.classList.remove('hidden');
+    showToast(error.message || 'Erro ao carregar crédito.', 'error');
+  } finally {
+    loadCreditLoading.classList.add('hidden');
+    saveLoadCreditBtn.disabled = false;
   }
 });
