@@ -553,18 +553,23 @@
     <div id="recargasOverlay" class="absolute inset-0 bg-black opacity-60 modal-overlay"></div>
     <div class="bg-white rounded-lg shadow-xl p-2 md:p-6 w-full max-w-3xl md:max-w-4xl lg:max-w-5xl relative modal-container fade-in" style="max-width:98vw; max-height:90vh; overflow:auto;">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
-        <div class="flex flex-wrap gap-2 items-center">
+        <div class="flex flex-wrap gap-2 items-center w-full md:w-auto">
           <h3 class="text-lg font-medium text-gray-900">Recargas</h3>
           <span id="recargasTotalCarregadoSum" class="bg-blue-100 text-blue-900 rounded px-2 py-1 mx-1 font-semibold text-xs md:text-base" title="Soma do Total Carregado">Total Carregado: 0</span>
           <span id="recargasLimiteDisponivelSum" class="bg-green-100 text-green-900 rounded px-2 py-1 mx-1 font-semibold text-xs md:text-base" title="Soma do Limite Disponível">Limite Disponível: 0</span>
+          <span id="recargasTotalConsumidoSum" class="bg-orange-100 text-orange-900 rounded px-2 py-1 mx-1 font-semibold text-xs md:text-base" title="Soma do Total Consumido">Total Consumido: 0</span>
+          <input id="recargasSearchInput" type="text" placeholder="Buscar Login..." class="border rounded px-2 py-1 text-xs md:text-sm mx-1" style="max-width:120px;">
+          <input id="recargasDateStart" type="date" class="border rounded px-2 py-1 text-xs md:text-sm mx-1" style="max-width:120px;">
+          <span class="text-xs md:text-sm mx-1">a</span>
+          <input id="recargasDateEnd" type="date" class="border rounded px-2 py-1 text-xs md:text-sm mx-1" style="max-width:120px;">
         </div>
-        <div class="flex flex-wrap gap-2 items-center justify-end w-full md:w-auto">
-          <input id="recargasSearchInput" type="text" placeholder="Buscar Login..." class="border rounded px-2 py-1 text-xs md:text-sm" style="max-width:120px;">
-          <input id="recargasDateStart" type="date" class="border rounded px-2 py-1 text-xs md:text-sm" style="max-width:120px;">
-          <span class="text-xs md:text-sm">a</span>
-          <input id="recargasDateEnd" type="date" class="border rounded px-2 py-1 text-xs md:text-sm" style="max-width:120px;">
-          <button id="recargasDownloadCsv" class="bg-blue-600 hover:bg-blue-700 text-white rounded px-2 py-1 text-xs md:text-sm" title="Baixar CSV">Baixar CSV</button>
-          <button id="fecharRecargasModal" class="bg-gray-200 text-gray-800 rounded px-3 py-1 hover:bg-gray-300 focus:outline-none">Fechar</button>
+        <div class="flex items-center ml-auto gap-2">
+          <button id="recargasDownloadCsv" class="text-blue-700 hover:text-blue-900 px-2 py-1 mx-1" title="Baixar CSV">
+            <i class="fas fa-download"></i>
+          </button>
+          <button id="fecharRecargasModal" class="text-gray-700 hover:text-red-600 px-2 py-1 mx-1" title="Fechar Modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
       </div>
       <div class="overflow-x-auto" style="max-height:70vh;">

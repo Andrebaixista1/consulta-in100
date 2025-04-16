@@ -362,10 +362,13 @@ function applyRecargasFiltersAndRender() {
   // Atualiza as somas
   const totalCarregado = filtered.reduce((acc, cur) => acc + (Number(cur.total_carregado) || 0), 0);
   const limiteDisponivel = filtered.reduce((acc, cur) => acc + (Number(cur.limite_disponivel) || 0), 0);
+  const totalConsumido = filtered.reduce((acc, cur) => acc + (Number(cur.consultas_realizada) || 0), 0);
   const totalEl = document.getElementById('recargasTotalCarregadoSum');
   const limiteEl = document.getElementById('recargasLimiteDisponivelSum');
+  const consumidoEl = document.getElementById('recargasTotalConsumidoSum');
   if (totalEl) totalEl.textContent = `Total Carregado: ${totalCarregado.toLocaleString('pt-BR')}`;
   if (limiteEl) limiteEl.textContent = `Limite Disponível: ${limiteDisponivel.toLocaleString('pt-BR')}`;
+  if (consumidoEl) consumidoEl.textContent = `Total Consumido: ${totalConsumido.toLocaleString('pt-BR')}`;
 
   renderRecargasTable(filtered, tableHead, tableBody, recargasSort);
 }
