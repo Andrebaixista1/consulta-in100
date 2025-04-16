@@ -248,6 +248,67 @@ if (usuariosOverlay) usuariosOverlay.addEventListener('click', () => usuariosMod
 
 // Recargas
 let recargasSort = { col: '', dir: 'asc' };
+function renderRecargasTable(data, tableHeadEl, tableBodyEl, sortState) {
+  // Colunas fixas e nomes amigáveis
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'id_user', label: 'ID Usuario' },
+    { key: 'login', label: 'Login' },
+    { key: 'total_carregado', label: 'Total Carregado' },
+    { key: 'limite_disponivel', label: 'Limite Disponivel' },
+    { key: 'consultas_realizada', label: 'Consultas Realizadas' },
+    { key: 'data_saldo_carregado', label: 'Ultima Recarga' }
+  ];
+  if (!Array.isArray(data) || data.length === 0) {
+    tableHeadEl.innerHTML = '';
+    tableBodyEl.innerHTML = '<tr><td colspan="100%">Nenhuma recarga encontrada.</td></tr>';
+    return;
+  }
+  // Cabeçalho com ordenação
+  tableHeadEl.innerHTML = columns.map(col => `
+    <th class="px-4 py-2 cursor-pointer whitespace-nowrap" data-col="${col.key}">
+      ${col.label} ${sortState.col === col.key ? (sortState.dir === 'asc' ? '▲' : '▼') : ''}
+    </th>`).join('');
+  // Corpo
+  let sorted = [...data];
+  if (sortState.col) {
+    sorted.sort((a, b) => {
+      let valA = a[sortState.col];
+      let valB = b[sortState.col];
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+      if (valA < valB) return sortState.dir === 'asc' ? -1 : 1;
+      if (valA > valB) return sortState.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+  tableBodyEl.innerHTML = sorted.map(row =>
+    `<tr>${columns.map(col => {
+      let value = row[col.key];
+      if (col.key === 'data_saldo_carregado') {
+        value = value ? new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+      }
+      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value ?? '-'}</td>`;
+    }).join('')}</tr>`
+  ).join('');
+  // Eventos de ordenação
+  tableHeadEl.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-col');
+      if (sortState.col === col) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.col = col;
+        sortState.dir = 'asc';
+      }
+      renderRecargasTable(data, tableHeadEl, tableBodyEl, sortState);
+    });
+  });
+}
+
+let recargasRawData = [];
+let recargasFilteredData = [];
+
 recargasBtn.addEventListener('click', async (e) => {
   e.preventDefault();
   adminDropdownMenu.classList.add('hidden');
@@ -264,18 +325,95 @@ recargasBtn.addEventListener('click', async (e) => {
         data = JSON.parse(text);
       }
     }
-    if (!Array.isArray(data) || data.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="100%">Nenhuma recarga encontrada.</td></tr>';
-      tableHead.innerHTML = '';
-      return;
-    }
-    recargasSort = { col: Object.keys(data[0]||{})[0]||'', dir: 'asc' };
-    renderDynamicTable(data, tableHead, tableBody, recargasSort);
+    recargasRawData = Array.isArray(data) ? data : [];
+    recargasFilteredData = [...recargasRawData];
+    applyRecargasFiltersAndRender();
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar recargas: ${err.message}</td></tr>`;
     tableHead.innerHTML = '';
   }
 });
+
+function applyRecargasFiltersAndRender() {
+  const searchInput = document.getElementById('recargasSearchInput');
+  const dateStart = document.getElementById('recargasDateStart');
+  const dateEnd = document.getElementById('recargasDateEnd');
+  const tableHead = document.getElementById('recargasTableHead');
+  const tableBody = document.getElementById('recargasTableBody');
+  let filtered = [...recargasRawData];
+  // Filtro login
+  if (searchInput && searchInput.value) {
+    filtered = filtered.filter(item => (item.login || '').toLowerCase().includes(searchInput.value.toLowerCase()));
+  }
+  // Filtro data
+  if (dateStart && dateStart.value) {
+    const start = new Date(dateStart.value + 'T00:00:00');
+    filtered = filtered.filter(item => item.data_saldo_carregado && new Date(item.data_saldo_carregado) >= start);
+  }
+  if (dateEnd && dateEnd.value) {
+    const end = new Date(dateEnd.value + 'T23:59:59');
+    filtered = filtered.filter(item => item.data_saldo_carregado && new Date(item.data_saldo_carregado) <= end);
+  }
+  recargasFilteredData = filtered;
+  // Atualiza o título do modal
+  const recargasTitulo = document.querySelector('#recargasModal h3');
+  if (recargasTitulo) recargasTitulo.textContent = `Recargas - ${filtered.length}`;
+
+  // Atualiza as somas
+  const totalCarregado = filtered.reduce((acc, cur) => acc + (Number(cur.total_carregado) || 0), 0);
+  const limiteDisponivel = filtered.reduce((acc, cur) => acc + (Number(cur.limite_disponivel) || 0), 0);
+  const totalEl = document.getElementById('recargasTotalCarregadoSum');
+  const limiteEl = document.getElementById('recargasLimiteDisponivelSum');
+  if (totalEl) totalEl.textContent = `Total Carregado: ${totalCarregado.toLocaleString('pt-BR')}`;
+  if (limiteEl) limiteEl.textContent = `Limite Disponível: ${limiteDisponivel.toLocaleString('pt-BR')}`;
+
+  renderRecargasTable(filtered, tableHead, tableBody, recargasSort);
+}
+
+
+// Eventos de filtro
+setTimeout(() => {
+  const searchInput = document.getElementById('recargasSearchInput');
+  const dateStart = document.getElementById('recargasDateStart');
+  const dateEnd = document.getElementById('recargasDateEnd');
+  if (searchInput) searchInput.addEventListener('input', applyRecargasFiltersAndRender);
+  if (dateStart) dateStart.addEventListener('change', applyRecargasFiltersAndRender);
+  if (dateEnd) dateEnd.addEventListener('change', applyRecargasFiltersAndRender);
+  // Botão download CSV
+  const downloadBtn = document.getElementById('recargasDownloadCsv');
+  if (downloadBtn) downloadBtn.addEventListener('click', () => {
+    downloadRecargasCsv(recargasFilteredData);
+  });
+}, 500);
+
+function downloadRecargasCsv(data) {
+  if (!data || !data.length) return;
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'id_user', label: 'ID Usuario' },
+    { key: 'login', label: 'Login' },
+    { key: 'total_carregado', label: 'Total Carregado' },
+    { key: 'limite_disponivel', label: 'Limite Disponivel' },
+    { key: 'consultas_realizada', label: 'Consultas Realizadas' },
+    { key: 'data_saldo_carregado', label: 'Ultima Recarga' }
+  ];
+  let csv = columns.map(col => col.label).join(';') + '\n';
+  csv += data.map(row => columns.map(col => {
+    let value = row[col.key];
+    if (col.key === 'data_saldo_carregado') {
+      value = value ? new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    }
+    return (value ?? '').toString().replace(/;/g, ',');
+  }).join(';')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', 'recargas.csv');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 if (fecharRecargasModal) fecharRecargasModal.addEventListener('click', () => recargasModal.classList.add('hidden'));
 if (recargasOverlay) recargasOverlay.addEventListener('click', () => recargasModal.classList.add('hidden'));
 
