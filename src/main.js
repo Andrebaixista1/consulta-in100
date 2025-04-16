@@ -125,7 +125,11 @@ function openChangePasswordModal() {
   changePasswordForm.reset();
   changePasswordError.classList.add('hidden');
   changePasswordLoading.classList.add('hidden');
+  if (typeof saveChangePasswordBtn !== 'undefined' && saveChangePasswordBtn) {
   saveChangePasswordBtn.disabled = false;
+} else if (typeof changePasswordSubmitBtn !== 'undefined' && changePasswordSubmitBtn) {
+  changePasswordSubmitBtn.disabled = false;
+}
   changePasswordModal.classList.remove('hidden');
 }
 
@@ -182,7 +186,7 @@ loginForm.addEventListener('submit', async (e) => {
       loggedUserName.textContent = data.login;
 
       // Lógica para mostrar/esconder o dropdown do admin
-      if (data.login === 'andrefelipe' || data.login === 'admin') {
+      if (data.login === 'andrefelipe' || data.login === 'lauany.plan') {
         adminDropdownContainer.classList.remove('hidden');
       } else {
         adminDropdownContainer.classList.add('hidden');
@@ -259,6 +263,9 @@ searchForm.addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf, nb, login: userLogin })
     });
+    if (res.status === 500 || res.status === 504) {
+      throw new Error('Erro no servidor, espere um tempo e tente novamente');
+    }
     if (!res.ok) {
        // Tenta ler o corpo do erro, se houver
        let errorMsg = 'Erro na consulta';
@@ -412,7 +419,7 @@ registerUserForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = registerNameInput.value.trim();
     const login = registerLoginInput.value.trim();
-    const senha = registerPasswordInput.value; // Não usar trim() em senha
+    const senha = document.getElementById('registerPassword').value; // Corrigido para evitar ReferenceError
 
     if (!nome || !login || !senha) {
         registerUserError.textContent = 'Por favor, preencha todos os campos.';
@@ -441,6 +448,9 @@ registerUserForm.addEventListener('submit', async (e) => {
 
         const data = await res.json(); // Tenta ler a resposta mesmo se não for ok
 
+        if (res.status === 500) {
+            throw new Error('Erro no servidor, espere um tempo e tente novamente');
+        }
         if (!res.ok) {
             // Tenta usar a mensagem de erro da API, senão uma genérica
             const errorMessage = data?.error || `Erro ${res.status}: ${res.statusText}`;
@@ -482,7 +492,7 @@ changePasswordForm.addEventListener('submit', async (e) => {
   const newPassword = changePasswordNewPassword.value;
 
   // Log para depuração
-  console.log('Alterar Senha - login:', login, 'novaSenha:', newPassword);
+  // console.log('Alterar Senha - login:', login, 'novaSenha:', newPassword);
 
   if (!login || !newPassword) {
     changePasswordError.textContent = 'Por favor, preencha todos os campos.';
@@ -532,10 +542,10 @@ changePasswordForm.addEventListener('submit', async (e) => {
 
 // --- Mostrar/Ocultar Senha no Cadastro de Usuário ---
 document.addEventListener('DOMContentLoaded', function () {
+  // Cadastro usuário
   const registerPasswordInput = document.getElementById('registerPassword');
   const toggleRegisterPasswordBtn = document.getElementById('toggleRegisterPassword');
   const registerPasswordEye = document.getElementById('registerPasswordEye');
-
   if (toggleRegisterPasswordBtn && registerPasswordInput && registerPasswordEye) {
     toggleRegisterPasswordBtn.addEventListener('click', () => {
       const isPassword = registerPasswordInput.type === 'password';
@@ -543,6 +553,60 @@ document.addEventListener('DOMContentLoaded', function () {
       registerPasswordEye.classList.toggle('fa-eye', !isPassword);
       registerPasswordEye.classList.toggle('fa-eye-slash', isPassword);
     });
+  }
+
+  // Alterar senha
+  const changePasswordInput = document.getElementById('newPassword');
+  const toggleChangePasswordBtn = document.getElementById('toggleChangePassword');
+  const changePasswordEye = document.getElementById('changePasswordEye');
+  if (toggleChangePasswordBtn && changePasswordInput && changePasswordEye) {
+    toggleChangePasswordBtn.addEventListener('click', () => {
+      const isPassword = changePasswordInput.type === 'password';
+      changePasswordInput.type = isPassword ? 'text' : 'password';
+      changePasswordEye.classList.toggle('fa-eye', !isPassword);
+      changePasswordEye.classList.toggle('fa-eye-slash', isPassword);
+    });
+  }
+});
+
+// --- Submit do formulário de alteração de senha ---
+changePasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const login = changePasswordLogin.value.trim();
+  const novaSenha = document.getElementById('newPassword').value;
+
+  if (!login || !novaSenha) {
+    if (changePasswordError) {
+      changePasswordError.textContent = 'Preencha todos os campos!';
+      changePasswordError.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (changePasswordError) changePasswordError.classList.add('hidden');
+  if (changePasswordLoading) changePasswordLoading.classList.remove('hidden');
+  if (changePasswordSubmitBtn) changePasswordSubmitBtn.disabled = true;
+
+  try {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login, novaSenha })
+    });
+    const data = await res.json();
+    if (res.status === 500 || res.status === 504) throw new Error('Erro no servidor, espere um tempo e tente novamente');
+    if (!res.ok) throw new Error(data.error || 'Erro ao alterar senha');
+    showToast(data.message || 'Senha alterada com sucesso!', 'success');
+    closeChangePasswordModal();
+  } catch (error) {
+    if (changePasswordError) {
+      changePasswordError.textContent = error.message || 'Erro ao alterar senha.';
+      changePasswordError.classList.remove('hidden');
+    }
+    showToast(error.message || 'Erro ao alterar senha.', 'error');
+  } finally {
+    if (changePasswordLoading) changePasswordLoading.classList.add('hidden');
+    if (changePasswordSubmitBtn) changePasswordSubmitBtn.disabled = false;
   }
 });
 
@@ -637,6 +701,9 @@ loadCreditForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ id_user: user.id, login, total_carregado: amount }),
     });
 
+    if (res.status === 500 || res.status === 504) {
+      throw new Error('Erro no servidor, espere um tempo e tente novamente');
+    }
     const data = await res.json();
 
     if (!res.ok) {
