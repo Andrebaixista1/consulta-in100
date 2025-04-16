@@ -149,17 +149,24 @@ const fecharRecargasModal = document.getElementById('fecharRecargasModal');
 
 
 // Utilitário para montar tabela dinâmica
-function renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState) {
+function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
+  // Colunas fixas e nomes amigáveis
+  const columns = [
+    { key: 'id', label: 'ID' },
+    { key: 'nome', label: 'Nome' },
+    { key: 'login', label: 'Login' },
+    { key: 'data_criacao', label: 'Data Criação' },
+    { key: 'ultimo_log', label: 'Ultimo Login' }
+  ];
   if (!Array.isArray(data) || data.length === 0) {
     tableHeadEl.innerHTML = '';
     tableBodyEl.innerHTML = '<tr><td colspan="100%">Nenhum dado encontrado.</td></tr>';
     return;
   }
-  const columns = Object.keys(data[0]);
   // Cabeçalho com ordenação
   tableHeadEl.innerHTML = columns.map(col => `
-    <th class="px-4 py-2 cursor-pointer whitespace-nowrap" data-col="${col}">
-      ${col} ${sortState.col === col ? (sortState.dir === 'asc' ? '▲' : '▼') : ''}
+    <th class="px-4 py-2 cursor-pointer whitespace-nowrap" data-col="${col.key}">
+      ${col.label} ${sortState.col === col.key ? (sortState.dir === 'asc' ? '▲' : '▼') : ''}
     </th>`).join('');
   // Corpo
   let sorted = [...data];
@@ -176,14 +183,11 @@ function renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState) {
   }
   tableBodyEl.innerHTML = sorted.map(row =>
     `<tr>${columns.map(col => {
-      let value = row[col];
-      if (col === 'data_criacao' || col === 'ultimo_log') {
-        value = value ? new Date(value).toLocaleDateString('pt-BR') : '-';
+      let value = row[col.key];
+      if (col.key === 'data_criacao' || col.key === 'ultimo_log') {
+        value = value ? new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
       }
-      if (col === 'senha') {
-        value = value === '0' ? '0' : '***';
-      }
-      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value}</td>`;
+      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value ?? '-'}</td>`;
     }).join('')}</tr>`
   ).join('');
   // Eventos de ordenação
@@ -196,13 +200,17 @@ function renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState) {
         sortState.col = col;
         sortState.dir = 'asc';
       }
-      renderDynamicTable(data, tableHeadEl, tableBodyEl, sortState);
+      renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState);
     });
   });
 }
 
+// Substitua o renderDynamicTable por renderUsuariosTable no carregamento dos usuários
+
 // Usuários
 let usuariosSort = { col: '', dir: 'asc' };
+const API_URL = 'https://api-consulta-in-100.vercel.app';
+
 usuariosBtn.addEventListener('click', async (e) => {
   e.preventDefault();
   adminDropdownMenu.classList.add('hidden');
@@ -211,7 +219,7 @@ usuariosBtn.addEventListener('click', async (e) => {
   const tableBody = document.getElementById('usuariosTableBody');
   tableBody.innerHTML = '<tr><td colspan="100%">Carregando...</td></tr>';
   try {
-    const res = await fetch('/api/usuarios');
+    const res = await fetch(`${API_URL}/api/usuarios`);
     let data = [];
     // Só tenta ler JSON se houver body e status OK
     if (res.ok) {
@@ -225,8 +233,11 @@ usuariosBtn.addEventListener('click', async (e) => {
       tableHead.innerHTML = '';
       return;
     }
-    usuariosSort = { col: Object.keys(data[0]||{})[0]||'', dir: 'asc' };
-    renderDynamicTable(data, tableHead, tableBody, usuariosSort);
+    usuariosSort = { col: 'id', dir: 'asc' };
+    // Atualiza o título do modal com o contador
+    const usuariosTitulo = document.querySelector('#usuariosModal h3');
+    if (usuariosTitulo) usuariosTitulo.textContent = `Usuários - ${data.length}`;
+    renderUsuariosTable(data, tableHead, tableBody, usuariosSort);
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar usuários: ${err.message}</td></tr>`;
     tableHead.innerHTML = '';
@@ -245,12 +256,24 @@ recargasBtn.addEventListener('click', async (e) => {
   const tableBody = document.getElementById('recargasTableBody');
   tableBody.innerHTML = '<tr><td colspan="100%">Carregando...</td></tr>';
   try {
-    const res = await fetch('/api/creditos');
-    const data = await res.json();
+    const res = await fetch(`${API_URL}/api/creditos`);
+    let data = [];
+    if (res.ok) {
+      const text = await res.text();
+      if (text) {
+        data = JSON.parse(text);
+      }
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="100%">Nenhuma recarga encontrada.</td></tr>';
+      tableHead.innerHTML = '';
+      return;
+    }
     recargasSort = { col: Object.keys(data[0]||{})[0]||'', dir: 'asc' };
     renderDynamicTable(data, tableHead, tableBody, recargasSort);
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar recargas: ${err.message}</td></tr>`;
+    tableHead.innerHTML = '';
   }
 });
 if (fecharRecargasModal) fecharRecargasModal.addEventListener('click', () => recargasModal.classList.add('hidden'));
