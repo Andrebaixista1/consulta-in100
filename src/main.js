@@ -53,6 +53,19 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 const searchForm = document.getElementById('searchForm');
+const consultaSwitch = document.getElementById('consultaSwitch');
+const consultaStatus = document.getElementById('consultaStatus');
+
+// Atualiza o texto do status do switch ao carregar a página e ao mudar
+if (consultaSwitch && consultaStatus) {
+  // Estado inicial
+  consultaStatus.textContent = consultaSwitch.checked ? 'ON' : 'OFF';
+  // Ao mudar
+  consultaSwitch.addEventListener('change', function() {
+    consultaStatus.textContent = this.checked ? 'ON' : 'OFF';
+  });
+}
+
 const resultsSection = document.getElementById('resultsSection');
 const resultsError = document.getElementById('resultsError');
 const searchBtnText = document.getElementById('searchBtnText');
@@ -422,6 +435,53 @@ if (recargasOverlay) recargasOverlay.addEventListener('click', () => recargasMod
 
 // --- Event Listeners ---
 
+// Switch Consulta: Atualiza label ON/OFF
+if (consultaSwitch && consultaStatus) {
+  consultaSwitch.addEventListener('change', function() {
+    consultaStatus.textContent = this.checked ? 'ON' : 'OFF';
+  });
+}
+
+// Substitua a lógica do submit do searchForm para usar a URL correta
+
+// --- Traduções de campos da API ---
+function translateTipoBloqueio(value) {
+  const map = {
+    'blocked_by_benefitiary': 'Bloqueado pelo Beneficiário',
+    'not_blocked': 'Não Bloqueado',
+    'blocked_in_concession': 'Bloqueado na Concessão',
+    'blocked_by_tbm': 'Bloqueado por TBM',
+    '': 'NÃO INFORMADO',
+    null: 'NÃO INFORMADO',
+    undefined: 'NÃO INFORMADO'
+  };
+  return map.hasOwnProperty(value) ? map[value] : 'NÃO INFORMADO';
+}
+
+function translateTipoCredito(value) {
+  const map = {
+    'magnetic_card': 'Cartão Magnético',
+    'checking_account': 'Conta Corrente',
+    '': 'NÃO INFORMADO',
+    null: 'NÃO INFORMADO',
+    undefined: 'NÃO INFORMADO'
+  };
+  return map.hasOwnProperty(value) ? map[value] : 'NÃO INFORMADO';
+}
+
+function translateSituacaoBeneficio(value) {
+  const map = {
+    'blocked': 'Bloqueado',
+    'elegible': 'Elegível',
+    'inelegible': 'Inelegível',
+    '': 'NÃO INFORMADO',
+    null: 'NÃO INFORMADO',
+    undefined: 'NÃO INFORMADO'
+  };
+  return map.hasOwnProperty(value) ? map[value] : 'NÃO INFORMADO';
+}
+
+
 // --- Funções auxiliares para criptografia ---
 function b64DecodeUnicode(str) {
   return decodeURIComponent(atob(str).split('').map(function(c) {
@@ -541,7 +601,13 @@ searchForm.addEventListener('submit', async (e) => {
   resultsError.classList.add('hidden');
 
   try {
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/consulta', {
+    // Sempre usa a API online
+    const API_BASE_URL = 'https://api-consulta-in-100.vercel.app';
+    // Determina o endpoint com base no estado do switch
+    const endpoint = consultaSwitch && !consultaSwitch.checked
+      ? `${API_BASE_URL}/api/consulta2`
+      : `${API_BASE_URL}/api/consulta`;
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cpf, nb, login: userLogin })
@@ -565,7 +631,15 @@ searchForm.addEventListener('submit', async (e) => {
        }
        throw new Error(errorMsg);
     }
-    const response = await res.json();
+    // Garante que só tenta ler JSON se a resposta realmente for JSON
+    const contentType = res.headers.get('content-type');
+    let response;
+    if (contentType && contentType.includes('application/json')) {
+      response = await res.json();
+    } else {
+      const text = await res.text();
+      throw new Error('Resposta inesperada do servidor: ' + text.slice(0, 100));
+    }
 
     if (response.error) {
       resultsError.textContent = response.error;
@@ -604,14 +678,23 @@ searchForm.addEventListener('submit', async (e) => {
       document.getElementById('alimony').textContent = formatBoolean(dataApi.pensao);
       document.getElementById('birthDate').textContent = formatDate(dataApi.data_nascimento);
       document.getElementById('age').textContent = calculateAge(dataApi.data_nascimento);
-      document.getElementById('blockType').textContent = dataApi.tipo_bloqueio || '-';
+      document.getElementById('blockType').textContent = translateTipoBloqueio(dataApi.tipo_bloqueio);
       document.getElementById('grantDate').textContent = formatDate(dataApi.data_concessao);
       document.getElementById('benefitEndDate').textContent = formatDate(dataApi.data_final_beneficio);
-      document.getElementById('creditType').textContent = dataApi.tipo_credito || '-';
+      document.getElementById('creditType').textContent = translateTipoCredito(dataApi.tipo_credito);
       document.getElementById('benefitCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_beneficio);
       document.getElementById('consignedCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_consignado);
       document.getElementById('consignedCreditBalance').textContent = formatNumberWithCommas(dataApi.saldo_credito_consignado);
-      document.getElementById('benefitStatus').textContent = dataApi.situacao_beneficio || '-';
+      const benefitStatusEl = document.getElementById('benefitStatus');
+      const statusText = translateSituacaoBeneficio(dataApi.situacao_beneficio);
+      benefitStatusEl.textContent = statusText;
+      // Ajuste de cor conforme status
+      benefitStatusEl.style.color = '';
+      if (statusText === 'Bloqueado' || statusText === 'Inelegível') {
+        benefitStatusEl.style.color = '#d32f2f'; // vermelho
+      } else if (statusText === 'Elegível') {
+        benefitStatusEl.style.color = '#006400'; // verde escuro
+      }
       document.getElementById('legalRepresentativeName').textContent = dataApi.nome_representante_legal || '-';
       document.getElementById('bankInfo').textContent = dataApi.banco_desembolso || '-';
       document.getElementById('agencyCode').textContent = dataApi.agencia_desembolso || '-';

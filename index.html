@@ -84,7 +84,13 @@
       z-index: 60;
       /* Highest */
     }
-  </style>
+  .peer:checked ~ .slider {
+  background-color: #2196F3;
+}
+.peer:checked ~ .slider:before {
+  transform: translateX(20px);
+}
+</style>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -271,7 +277,21 @@
     </div>
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Consulta de Benefício</h2>
+        <div class="flex justify-between items-start mb-4">
+  <h2 class="text-lg font-medium text-gray-900">Consulta de Benefício</h2>
+  <div class="flex flex-col items-center">
+    <label class="font-semibold mb-1" for="consultaSwitch">Consulta:</label>
+    <div class="flex items-center gap-2">
+      <span class="text-xs">OFF</span>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="consultaSwitch" class="sr-only peer" checked>
+        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+        <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-all peer-checked:translate-x-5"></div>
+      </label>
+      <span class="text-xs">ON</span>
+    </div>
+  </div>
+</div>
         <form id="searchForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="fade-in">
@@ -591,6 +611,7 @@ Studio <img src="public/firebase-icon.png" alt="Firebase Studio Icon" class="inl
 
   </footer>
   <script type="module" src="./src/main.js"></script>
+  <!-- <script src="src/consoleSearchLogger.js"></script> -->
 </body>
 
 </html>
