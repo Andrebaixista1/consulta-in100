@@ -204,6 +204,7 @@
                 <a href="#" id="usuariosBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Usuários</a>
                 <a href="#" id="recargasBtn"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recargas</a>
+                <a href="#" id="higienizarLoteMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Higienizar em Lote</a>
               </div>
             </div>
             <button id="logoutBtn" class="text-red-600 hover:text-red-800 flex items-center">
@@ -214,6 +215,19 @@
         </div>
       </div>
     </header>
+<!-- Botão invisível para disparar o modal Higienizar em Lote -->
+<button id="abrirHigienizarLoteModalBtn" style="display:none"></button>
+<script>
+// Faz o menu disparar o botão invisível
+const higienizarMenuBtn = document.getElementById('higienizarLoteMenuBtn');
+const abrirHigienizarBtn = document.getElementById('abrirHigienizarLoteModalBtn');
+if (higienizarMenuBtn && abrirHigienizarBtn) {
+  higienizarMenuBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    abrirHigienizarBtn.click();
+  });
+}
+</script>
     <div class="bg-[#0B274C] text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
