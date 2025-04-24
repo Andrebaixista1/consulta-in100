@@ -80,6 +80,10 @@ const totalCarregadoEl = document.getElementById('totalCarregado');
 const adminDropdownContainer = document.getElementById('adminDropdownContainer');
 const adminDropdownToggle = document.getElementById('adminDropdownToggle');
 
+// --- Elementos do Dropdown Usuário ---
+const userDropdownContainer = document.getElementById('userDropdownContainer');
+const userDropdownMenu = document.getElementById('userDropdownMenu');
+
 const loadCreditBtn = document.getElementById('loadCreditBtn');
 
 // --- Elementos do Modal de Carregar Crédito ---
@@ -160,6 +164,27 @@ const fecharUsuariosModal = document.getElementById('fecharUsuariosModal');
 const fecharRecargasModal = document.getElementById('fecharRecargasModal');
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Listeners universais para menus do usuário e admin
+  document.querySelectorAll('#higienizarLoteMenuBtn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const abrirBtn = document.getElementById('abrirHigienizarLoteModalBtn');
+      if (abrirBtn) abrirBtn.click();
+    });
+  });
+  document.querySelectorAll('#downloadLotesMenuBtn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const modal = document.getElementById('downloadLotesModal');
+      if (modal) modal.style.display = 'flex';
+      // Limpa tabela e mensagem se necessário
+      const tbody = document.getElementById('statusLoteTableBody');
+      if (tbody) tbody.innerHTML = '';
+      const msg = document.getElementById('statusLoteMsg');
+      if (msg) msg.textContent = '';
+    });
+  });
+
   // Faz o menu disparar o botão invisível
   const higienizarMenuBtn = document.getElementById('higienizarLoteMenuBtn');
   const abrirHigienizarBtn = document.getElementById('abrirHigienizarLoteModalBtn');
@@ -171,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Download Lotes Modal - lógica simplificada para modal já incluso no HTML
-  const downloadLotesMenuBtn = document.getElementById('downloadLotesMenuBtn');
+  const downloadLotesMenuBtn = document.getElementById('downloadLotesMenuBtn2');
   const downloadLotesModal = document.getElementById('downloadLotesModal');
   const closeDownloadLotesModal = document.getElementById('closeDownloadLotesModal');
 
@@ -186,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Busca login do usuário logado
       const loggedUserName = document.getElementById('loggedUserName');
       const login = loggedUserName ? loggedUserName.textContent.trim() : '';
+      console.log('Login enviado para API /api/status-lote:', login);
       if (!login) {
         document.getElementById('statusLoteMsg').textContent = 'Não foi possível identificar o usuário logado.';
         return;
@@ -195,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const res = await fetch(`https://api-consulta-in-100.vercel.app/api/status-lote?login=${encodeURIComponent(login)}`);
         if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
         const data = await res.json();
+        console.log('Dados recebidos da API /api/status-lote:', data);
         if (!Array.isArray(data) || data.length === 0) {
           document.getElementById('statusLoteMsg').textContent = 'Nenhum lote encontrado.';
           atualizarTotaisDownloadLotes([]);
@@ -908,6 +935,18 @@ loginForm.addEventListener('submit', async (e) => {
       dashboardScreen.classList.remove('hidden');
       loggedUserName.textContent = data.login;
 
+      // Lógica para mostrar/esconder os dropdowns de admin e usuário
+      if (data.login === 'andrefelipe' || data.login === 'lauany.plan') {
+        adminDropdownContainer.classList.remove('hidden');
+        userDropdownContainer.classList.add('hidden');
+      } else {
+        adminDropdownContainer.classList.add('hidden');
+        userDropdownContainer.classList.remove('hidden');
+      }
+      // Sempre esconder os menus dropdown ao logar
+      adminDropdownMenu.classList.add('hidden');
+      userDropdownMenu.classList.add('hidden');
+
       // Lógica para mostrar/esconder o dropdown do admin
       if (data.login === 'andrefelipe' || data.login === 'lauany.plan') {
         adminDropdownContainer.classList.remove('hidden');
@@ -957,9 +996,11 @@ logoutBtn.addEventListener('click', () => {
   searchForm.reset();
   dashboardScreen.classList.add('hidden');
   loginScreen.classList.remove('hidden');
-  // Esconder o dropdown do admin no logout
+  // Esconder ambos os dropdowns no logout
   adminDropdownContainer.classList.add('hidden');
   adminDropdownMenu.classList.add('hidden');
+  userDropdownContainer.classList.add('hidden');
+  userDropdownMenu.classList.add('hidden');
 });
 
 // Consulta
@@ -1132,11 +1173,21 @@ adminDropdownToggle.addEventListener('click', (e) => {
     adminDropdownMenu.classList.toggle('hidden');
 });
 
+// --- Dropdown Usuário ---
+userDropdownToggle.addEventListener('click', (e) => {
+    e.stopPropagation(); // Impede que o clique se propague para o document
+    userDropdownMenu.classList.toggle('hidden');
+});
+
 // Fechar o dropdown se clicar fora dele
 document.addEventListener('click', (event) => {
-    // Verifica se o clique foi fora do container do dropdown E se o menu não está escondido
+    // Fecha o menu admin se clicar fora
     if (adminDropdownContainer && !adminDropdownContainer.contains(event.target) && adminDropdownMenu && !adminDropdownMenu.classList.contains('hidden')) {
         adminDropdownMenu.classList.add('hidden');
+    }
+    // Fecha o menu usuário se clicar fora
+    if (userDropdownContainer && !userDropdownContainer.contains(event.target) && userDropdownMenu && !userDropdownMenu.classList.contains('hidden')) {
+        userDropdownMenu.classList.add('hidden');
     }
 });
 

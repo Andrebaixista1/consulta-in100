@@ -220,17 +220,23 @@
               <button id="adminDropdownToggle" class="text-gray-600 hover:text-gray-800 focus:outline-none">
                 <i class="fas fa-cog"></i> <!-- Gear icon or similar -->
               </button>
-              <div id="adminDropdownMenu"
-                class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                <a href="#" id="loadCreditBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Carregar
-                  Credito</a>
-                <a href="#" id="registerUserBtn"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Usuario</a>
+              <div id="adminDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                <a href="#" id="loadCreditBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Carregar Credito</a>
+                <a href="#" id="registerUserBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Usuario</a>
                 <a href="#" id="usuariosBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Usuários</a>
-                <a href="#" id="recargasBtn"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recargas</a>
+                <a href="#" id="recargasBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recargas</a>
+                <!-- <a href="#" id="higienizarLoteMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Higienizar em Lote</a>
+                <a href="#" id="downloadLotesMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download Lotes</a> -->
+              </div>
+            </div>
+            <!-- User Dropdown - Hidden by default -->
+            <div id="userDropdownContainer" class="relative hidden">
+              <button id="userDropdownToggle" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                <i class="fas fa-cog"></i> <!-- Gear icon or similar -->
+              </button>
+              <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
                 <a href="#" id="higienizarLoteMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Higienizar em Lote</a>
-                <a href="#" id="downloadLotesMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download Lotes</a>
+                <a href="#" id="downloadLotesMenuBtn2" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download Lotes</a>
               </div>
             </div>
             <button id="logoutBtn" class="text-red-600 hover:text-red-800 flex items-center">
