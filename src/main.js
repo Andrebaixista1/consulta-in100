@@ -154,15 +154,192 @@ function closeChangePasswordModal() {
 const usuariosBtn = document.getElementById('usuariosBtn');
 const recargasBtn = document.getElementById('recargasBtn');
 const usuariosModal = document.getElementById('usuariosModal');
-const recargasModal = document.getElementById('recargasModal');
 const usuariosOverlay = document.getElementById('usuariosOverlay');
 const recargasOverlay = document.getElementById('recargasOverlay');
 const fecharUsuariosModal = document.getElementById('fecharUsuariosModal');
 const fecharRecargasModal = document.getElementById('fecharRecargasModal');
 
-// Garantir que o código só rode após o DOM estar pronto
-
 document.addEventListener('DOMContentLoaded', function() {
+  // Faz o menu disparar o botão invisível
+  const higienizarMenuBtn = document.getElementById('higienizarLoteMenuBtn');
+  const abrirHigienizarBtn = document.getElementById('abrirHigienizarLoteModalBtn');
+  if (higienizarMenuBtn && abrirHigienizarBtn) {
+    higienizarMenuBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      abrirHigienizarBtn.click();
+    });
+  }
+
+  // Download Lotes Modal - lógica simplificada para modal já incluso no HTML
+  const downloadLotesMenuBtn = document.getElementById('downloadLotesMenuBtn');
+  const downloadLotesModal = document.getElementById('downloadLotesModal');
+  const closeDownloadLotesModal = document.getElementById('closeDownloadLotesModal');
+
+  if (downloadLotesMenuBtn && downloadLotesModal) {
+    downloadLotesMenuBtn.addEventListener('click', async function(e) {
+      e.preventDefault();
+      console.log('Clicou em Download Lotes');
+      downloadLotesModal.style.display = 'flex';
+      // Limpa tabela e mensagem
+      document.getElementById('statusLoteTableBody').innerHTML = '';
+      document.getElementById('statusLoteMsg').textContent = '';
+      // Busca login do usuário logado
+      const loggedUserName = document.getElementById('loggedUserName');
+      const login = loggedUserName ? loggedUserName.textContent.trim() : '';
+      if (!login) {
+        document.getElementById('statusLoteMsg').textContent = 'Não foi possível identificar o usuário logado.';
+        return;
+      }
+      let lotesDataOriginal = [];
+      try {
+        const res = await fetch(`/api/status-lote?login=${encodeURIComponent(login)}`);
+        if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
+        const data = await res.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          document.getElementById('statusLoteMsg').textContent = 'Nenhum lote encontrado.';
+          atualizarTotaisDownloadLotes([]);
+          return;
+        }
+        lotesDataOriginal = data;
+        renderizarTabelaDownloadLotes(lotesDataOriginal);
+        configurarFiltrosDownloadLotes(lotesDataOriginal);
+      } catch (err) {
+        document.getElementById('statusLoteMsg').textContent = 'Erro ao buscar status dos lotes.';
+        atualizarTotaisDownloadLotes([]);
+        console.error(err);
+      }
+
+      // Função para renderizar a tabela filtrada
+      function renderizarTabelaDownloadLotes(data) {
+        const tbody = document.getElementById('statusLoteTableBody');
+        tbody.innerHTML = '';
+        // Buscar login do usuário logado
+        const loggedUserName = document.getElementById('loggedUserName');
+        const login = loggedUserName ? loggedUserName.textContent.trim() : '';
+        data.forEach(async item => {
+          const tr = document.createElement('tr');
+          let dataFormatada = '';
+          if (item.data_higienizacao) {
+            const d = new Date(item.data_higienizacao);
+            dataFormatada = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+          }
+          // Status: buscar via /api/higienizar-status
+          let status = '...';
+          let statusClass = 'bg-gray-100 text-gray-800';
+          try {
+            if (login && item.nome_arquivo) {
+              const resStatus = await fetch(`/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              if (resStatus.ok) {
+                const statusData = await resStatus.json();
+                if (statusData.status === 'Concluído') {
+                  status = 'Concluído';
+                  statusClass = 'bg-green-100 text-green-800';
+                } else if (statusData.status === 'Processando') {
+                  status = 'Processando';
+                  statusClass = 'bg-yellow-100 text-yellow-800';
+                } else {
+                  status = 'Carregando';
+                  statusClass = 'bg-gray-100 text-gray-800';
+                }
+              }
+            }
+          } catch {}
+          tr.innerHTML = `
+            <td class="px-2 py-1">${item.nome_arquivo}</td>
+            <td class="px-2 py-1 text-center">${dataFormatada}</td>
+            <td class="px-2 py-1 text-center">${item.quantidade}</td>
+            <td class="px-2 py-1 text-center">${item.higienizado}</td>
+            <td class="px-2 py-1 text-center">${item.erros}</td>
+            <td class="px-2 py-1 text-center">${item.perc_higienizado}%</td>
+            <td class="px-2 py-1 text-center"><span class="rounded px-2 py-1 ${statusClass}">${status}</span></td>
+            <td class="px-2 py-1 text-center"><button class="download-lote-btn bg-blue-600 hover:bg-blue-700 text-white rounded px-2 py-1 text-xs" data-nome="${encodeURIComponent(item.nome_arquivo)}"><i class="fas fa-download"></i></button></td>
+          `;
+          // Adicionar evento de download
+          tr.querySelector('.download-lote-btn').onclick = async function(e) {
+            e.preventDefault();
+            const loggedUserName = document.getElementById('loggedUserName');
+            const login = loggedUserName ? loggedUserName.textContent.trim() : '';
+            const nome_arquivo = decodeURIComponent(this.getAttribute('data-nome'));
+            if (!login || !nome_arquivo) return;
+            try {
+              const res = await fetch(`/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              if (!res.ok) throw new Error('Erro ao baixar arquivo');
+              const contentType = res.headers.get('Content-Type');
+              if (contentType && contentType.includes('application/json')) {
+                const errMsg = await res.json();
+                alert(errMsg.error || 'Erro ao baixar arquivo!');
+                return;
+              }
+              const blob = await res.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = nome_arquivo;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (err) {
+              alert('Erro ao baixar arquivo!');
+            }
+          };
+          tbody.appendChild(tr);
+        });
+        atualizarTotaisDownloadLotes(data);
+      }
+
+      // Função para atualizar totais
+      function atualizarTotaisDownloadLotes(data) {
+        document.getElementById('totalArquivos').textContent = `Arquivos: ${data.length}`;
+        document.getElementById('totalLinhas').textContent = `Linhas: ${data.reduce((acc, x) => acc + (x.quantidade || 0), 0)}`;
+        const hig = data.reduce((acc, x) => acc + (x.higienizado || 0), 0);
+        const err = data.reduce((acc, x) => acc + (x.erros || 0), 0);
+        document.getElementById('totalHigienizado').textContent = `Higienizado: ${hig}`;
+        document.getElementById('totalErros').textContent = `Erros: ${err}`;
+      }
+
+      // Função para aplicar filtros
+      function aplicarFiltrosDownloadLotes() {
+        let filtrado = [...lotesDataOriginal];
+        // Filtro de datas
+        const dataIni = document.getElementById('filtroDataInicio').value;
+        const dataFim = document.getElementById('filtroDataFim').value;
+        if (dataIni) {
+          const ini = new Date(dataIni + 'T00:00:00');
+          filtrado = filtrado.filter(item => item.data_higienizacao && new Date(item.data_higienizacao) >= ini);
+        }
+        if (dataFim) {
+          const fim = new Date(dataFim + 'T23:59:59');
+          filtrado = filtrado.filter(item => item.data_higienizacao && new Date(item.data_higienizacao) <= fim);
+        }
+        // Filtro de busca por nome
+        const buscaNome = document.getElementById('filtroNomeArquivo').value.trim().toLowerCase();
+        if (buscaNome) {
+          filtrado = filtrado.filter(item => (item.nome_arquivo || '').toLowerCase().includes(buscaNome));
+        }
+        renderizarTabelaDownloadLotes(filtrado);
+      }
+
+      // Configurar listeners dos filtros
+      function configurarFiltrosDownloadLotes() {
+        document.getElementById('filtroDataInicio').onchange = aplicarFiltrosDownloadLotes;
+        document.getElementById('filtroDataFim').onchange = aplicarFiltrosDownloadLotes;
+        document.getElementById('filtroNomeArquivo').oninput = aplicarFiltrosDownloadLotes;
+      }
+    });
+  }
+
+  if (closeDownloadLotesModal && downloadLotesModal) {
+    closeDownloadLotesModal.onclick = () => {
+      downloadLotesModal.style.display = 'none';
+    };
+    // Fechar ao clicar fora do conteúdo do modal
+    downloadLotesModal.onclick = (e) => {
+      if (e.target === downloadLotesModal) downloadLotesModal.style.display = 'none';
+    };
+  }
+
+
   const abrirHigienizarLoteBtn = document.getElementById('abrirHigienizarLoteModalBtn');
   
   if (abrirHigienizarLoteBtn) {

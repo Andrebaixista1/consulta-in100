@@ -90,6 +90,31 @@
 .peer:checked ~ .slider:before {
   transform: translateX(20px);
 }
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0; right: 0; bottom: 0;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background: #fff;
+  padding: 32px 24px;
+  border-radius: 8px;
+  min-width: 300px;
+  min-height: 120px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+  position: relative;
+}
+.modal .close {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  font-size: 24px;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -205,6 +230,7 @@
                 <a href="#" id="recargasBtn"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Recargas</a>
                 <a href="#" id="higienizarLoteMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Higienizar em Lote</a>
+                <a href="#" id="downloadLotesMenuBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download Lotes</a>
               </div>
             </div>
             <button id="logoutBtn" class="text-red-600 hover:text-red-800 flex items-center">
@@ -671,6 +697,56 @@ Studio <img src="public/firebase-icon.png" alt="Firebase Studio Icon" class="inl
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Download Lotes -->
+<!-- Modal Download Lotes estilizado como o Higienizar em Lote -->
+<div id="downloadLotesModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+  <div id="downloadLotesOverlay" class="absolute inset-0 bg-black opacity-60 modal-overlay"></div>
+  <div class="bg-white rounded-lg shadow-xl p-2 md:p-6 w-full max-w-2xl md:max-w-3xl relative modal-container fade-in" style="max-width:98vw; max-height:90vh; overflow:auto;">
+    <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2">
+        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
+          <div class="flex items-center gap-3">
+            <h3 class="text-lg font-medium text-gray-900">Download Lotes</h3>
+            <div class="flex gap-2 text-xs md:text-sm">
+              <span class="bg-gray-100 rounded px-2 py-1" id="totalArquivos">Arquivos: 0</span>
+              <span class="bg-gray-100 rounded px-2 py-1" id="totalLinhas">Linhas: 0</span>
+              <span class="bg-green-100 text-green-800 rounded px-2 py-1" id="totalHigienizado">Higienizado: 0</span>
+              <span class="bg-red-100 text-red-800 rounded px-2 py-1" id="totalErros">Erros: 0</span>
+            </div>
+          </div>
+          <button id="closeDownloadLotesModal" class="text-gray-700 hover:text-red-600 px-2 py-1">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center mb-2">
+          <input type="date" id="filtroDataInicio" class="border rounded px-2 py-1 text-xs" placeholder="Data inicial">
+          <input type="date" id="filtroDataFim" class="border rounded px-2 py-1 text-xs" placeholder="Data final">
+          <input type="text" id="filtroNomeArquivo" class="border rounded px-2 py-1 text-xs" placeholder="Buscar por nome..." style="min-width:180px;">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 text-xs md:text-sm" id="downloadLotesTable">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="px-2 py-2 text-left">Nome</th>
+                <th class="px-2 py-2 text-center">Data de Higienização</th>
+                <th class="px-2 py-2 text-center">Quantidade de linhas</th>
+                <th class="px-2 py-2 text-center">Higienizado</th>
+                <th class="px-2 py-2 text-center">Erros</th>
+                <th class="px-2 py-2 text-center">% Higienizado</th>
+              <th class="px-2 py-2 text-center">Status</th>
+              <th class="px-2 py-2 text-center">Download</th>
+              </tr>
+            </thead>
+            <tbody id="statusLoteTableBody">
+              <!-- Linhas preenchidas via JS -->
+            </tbody>
+          </table>
+        </div>
+      <div id="statusLoteMsg" class="mt-2 text-red-700 font-semibold"></div>
     </div>
   </div>
 </div>
