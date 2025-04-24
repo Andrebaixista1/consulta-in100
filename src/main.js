@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       let lotesDataOriginal = [];
       try {
-        const res = await fetch(`/api/status-lote?login=${encodeURIComponent(login)}`);
+        const res = await fetch(`https://api-consulta-in-100.vercel.app/api/status-lote?login=${encodeURIComponent(login)}`);
         if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) {
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let statusClass = 'bg-gray-100 text-gray-800';
           try {
             if (login && item.nome_arquivo) {
-              const resStatus = await fetch(`/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const resStatus = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (resStatus.ok) {
                 const statusData = await resStatus.json();
                 if (statusData.status === 'Concluído') {
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const nome_arquivo = decodeURIComponent(this.getAttribute('data-nome'));
             if (!login || !nome_arquivo) return;
             try {
-              const res = await fetch(`/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao baixar arquivo');
               const contentType = res.headers.get('Content-Type');
               if (contentType && contentType.includes('application/json')) {
@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let intervalId;
           async function checarStatus() {
             try {
-              const res = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao consultar status');
               const data = await res.json();
               if (data.status === 'Carregando') {
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
               formData.append('nomeArquivoCsv', file.name);
               const login = (document.getElementById('loggedUserName') && document.getElementById('loggedUserName').textContent) ? document.getElementById('loggedUserName').textContent.trim() : '';
               formData.append('login', login);
-              const res = await fetch('http://localhost:3000/api/higienizar', {
+              const res = await fetch('https://api-consulta-in-100.vercel.app/api/higienizar', {
                 method: 'POST',
                 body: formData
               });
