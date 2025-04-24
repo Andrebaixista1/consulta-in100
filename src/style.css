@@ -82,6 +82,15 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* Forçar alinhamento vertical central nas tabelas do modal de recargas */
+#recargasTable td, #recargasTable th {
+  vertical-align: middle !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

@@ -637,6 +637,44 @@ Studio <img src="public/firebase-icon.png" alt="Firebase Studio Icon" class="inl
   </footer>
   <script type="module" src="./src/main.js"></script>
   <!-- <script src="src/consoleSearchLogger.js"></script> -->
+<!-- Modal Higienizar em Lote -->
+<div id="higienizarLoteModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+  <div id="higienizarLoteOverlay" class="absolute inset-0 bg-black opacity-60 modal-overlay"></div>
+  <div class="bg-white rounded-lg shadow-xl p-2 md:p-6 w-full max-w-3xl md:max-w-4xl lg:max-w-5xl relative modal-container fade-in" style="max-width:98vw; max-height:90vh; overflow:auto;">
+    <div class="flex flex-col gap-2">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Consulta em Lote</h3>
+        <button id="fecharHigienizarLoteModal" class="text-gray-700 hover:text-red-600 px-2 py-1">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center mb-4">
+        <button id="adicionarArquivoBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2">
+          <i class="fas fa-plus"></i> Adicionar Arquivo
+        </button>
+        <span id="limiteLotesMsg" class="text-sm text-red-700 bg-red-100 font-semibold px-2 py-1 rounded hidden">Limite de 5 lotes atingido.</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-xs md:text-sm" id="tabelaHigienizarLote">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="px-2 py-2 text-left">Arquivo</th>
+              <th class="px-2 py-2 text-left">Nome Arquivo</th>
+              <th class="px-2 py-2 text-center">Total Linhas</th>
+              <th class="px-2 py-2 text-center">Tempo Estimado</th>
+              <th class="px-2 py-2 text-center">Status</th>
+              <th class="px-2 py-2 text-center">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaHigienizarLoteBody">
+            <!-- Linhas serão adicionadas via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 
 </html>

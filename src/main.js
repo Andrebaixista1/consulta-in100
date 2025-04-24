@@ -160,6 +160,209 @@ const recargasOverlay = document.getElementById('recargasOverlay');
 const fecharUsuariosModal = document.getElementById('fecharUsuariosModal');
 const fecharRecargasModal = document.getElementById('fecharRecargasModal');
 
+// Garantir que o código só rode após o DOM estar pronto
+
+document.addEventListener('DOMContentLoaded', function() {
+  const abrirHigienizarLoteBtn = document.getElementById('abrirHigienizarLoteModalBtn');
+  
+  if (abrirHigienizarLoteBtn) {
+    abrirHigienizarLoteBtn.addEventListener('click', () => {
+      const modal = document.getElementById('higienizarLoteModal');
+      const btnFechar = document.getElementById('fecharHigienizarLoteModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        if (btnFechar && !btnFechar.dataset.listener) {
+          btnFechar.addEventListener('click', () => {
+            modal.classList.add('hidden');
+          });
+          btnFechar.dataset.listener = 'true';
+        }
+        inicializarHigienizarLoteModalFeatures();
+      } else {
+        alert('Erro: Modal não encontrado no HTML.');
+      }
+    });
+
+    // Função para inicializar recursos do modal Higienizar em Lote
+    function inicializarHigienizarLoteModalFeatures() {
+      const tabelaBody = document.getElementById('tabelaHigienizarLoteBody');
+      const btnAdicionar = document.getElementById('adicionarArquivoBtn');
+      const limiteMsg = document.getElementById('limiteLotesMsg');
+      if (!tabelaBody || !btnAdicionar) return;
+      if (btnAdicionar.dataset.listener) return; // evita múltiplos listeners
+      btnAdicionar.addEventListener('click', function () {
+        const linhas = tabelaBody.querySelectorAll('tr').length;
+        if (linhas >= 5) {
+          limiteMsg.classList.remove('hidden');
+          return;
+        } else {
+          limiteMsg.classList.add('hidden');
+        }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-2 py-2 text-center">
+            <input type="file" accept=".csv" class="arquivo-input" style="width: 120px;" />
+          </td>
+          <td class="px-2 py-2 nome-arquivo"></td>
+          <td class="px-2 py-2 text-center total-linhas">-</td>
+          <td class="px-2 py-2 text-center tempo-estimado">-</td>
+          <td class="px-2 py-2 text-center status-cell">
+            <span class="status-label status-aguardando">Aguardando</span>
+          </td>
+          <td class="px-2 py-2 text-center">
+            <button class="carregar-btn text-blue-600" title="Carregar"><i class="fas fa-upload"></i></button>
+            <button class="excluir-btn text-red-600 ml-2" title="Excluir"><i class="fas fa-trash"></i></button>
+          </td>
+        `;
+        tabelaBody.appendChild(row);
+
+        const input = row.querySelector('.arquivo-input');
+        input.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          row.querySelector('.nome-arquivo').textContent = file.name;
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            const text = ev.target.result;
+            const linhas = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            const totalLinhas = linhas.length - 1; // Desconta header
+            row.querySelector('.total-linhas').textContent = totalLinhas;
+            // Tempo estimado: 5 segundos por linha
+            if (totalLinhas > 0) {
+              const tempoTotal = totalLinhas * 5;
+              let tempoStr = '';
+              if (tempoTotal < 60) {
+                tempoStr = tempoTotal + 's';
+              } else {
+                const min = Math.floor(tempoTotal / 60);
+                const seg = tempoTotal % 60;
+                tempoStr = `${min}m${seg > 0 ? ' ' + seg + 's' : ''}`;
+              }
+              row.querySelector('.tempo-estimado').textContent = tempoStr;
+            } else {
+              row.querySelector('.tempo-estimado').textContent = '-';
+            }
+          };
+          reader.readAsText(file);
+        });
+
+        row.querySelector('.excluir-btn').onclick = function () {
+          row.remove();
+        };
+
+        // Estado do carregamento
+        let carregando = false;
+        const btnCarregar = row.querySelector('.carregar-btn');
+        const statusCell = row.querySelector('.status-label');
+
+        function setStatusAguardando() {
+          statusCell.textContent = 'Aguardando';
+          statusCell.className = 'status-label status-aguardando bg-gray-100 text-gray-800 rounded px-2 py-1';
+        }
+        function setStatusProcessando() {
+          statusCell.textContent = 'Processando...';
+          statusCell.className = 'status-label status-processando bg-yellow-100 text-yellow-900 rounded px-2 py-1 animate-pulse';
+        }
+        function setStatusConcluido() {
+          statusCell.textContent = 'Concluído';
+          statusCell.className = 'status-label status-concluido bg-green-100 text-green-800 rounded px-2 py-1';
+        }
+        function setStatusErro() {
+          statusCell.textContent = 'Verifique o Arquivo';
+          statusCell.className = 'status-label status-erro bg-red-100 text-red-800 rounded px-2 py-1';
+        }
+
+        // Função para monitorar o status da higienização
+        function monitorarStatusHigienizacao(nomeArquivoCsv, statusCell, login) {
+          // Função para sanitizar o nome do arquivo igual ao backend
+          function sanitizeFileName(filename) {
+            return filename ? filename.normalize('NFD').replace(/[^\w.]/g, '_') : '';
+          }
+          const nomeArquivoSanitizado = sanitizeFileName(nomeArquivoCsv);
+          let intervalId;
+          async function checarStatus() {
+            try {
+              const res = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
+              if (!res.ok) throw new Error('Erro ao consultar status');
+              const data = await res.json();
+              if (data.status === 'Carregando') {
+                statusCell.textContent = 'Carregando';
+                statusCell.className = 'status-label status-aguardando bg-gray-100 text-gray-800 rounded px-2 py-1';
+              } else if (data.status === 'Processando') {
+                statusCell.textContent = 'Processando...';
+                statusCell.className = 'status-label status-processando bg-yellow-100 text-yellow-900 rounded px-2 py-1 animate-pulse';
+              } else if (data.status === 'Concluído') {
+                statusCell.textContent = 'Concluído';
+                statusCell.className = 'status-label status-concluido bg-green-100 text-green-800 rounded px-2 py-1';
+                clearInterval(intervalId);
+              }
+            } catch (e) {
+              statusCell.textContent = 'Erro ao obter status';
+              statusCell.className = 'status-label status-erro bg-red-100 text-red-800 rounded px-2 py-1';
+              clearInterval(intervalId);
+            }
+          }
+          checarStatus();
+          intervalId = setInterval(checarStatus, 3000); // Consulta a cada 3 segundos
+        }
+        setStatusAguardando();
+
+        btnCarregar.onclick = async function () {
+          if (!carregando) {
+            // Iniciar carregamento
+            const fileInput = row.querySelector('.arquivo-input');
+            const file = fileInput.files[0];
+            if (!file) {
+              alert('Selecione um arquivo antes de iniciar.');
+              return;
+            }
+            carregando = true;
+            btnCarregar.innerHTML = '<i class="fas fa-pause"></i>';
+            btnCarregar.title = 'Pausar';
+            setStatusProcessando();
+            try {
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('nomeArquivoCsv', file.name);
+              const login = (document.getElementById('loggedUserName') && document.getElementById('loggedUserName').textContent) ? document.getElementById('loggedUserName').textContent.trim() : '';
+              formData.append('login', login);
+              const res = await fetch('http://localhost:3000/api/higienizar', {
+                method: 'POST',
+                body: formData
+              });
+              if (!res.ok) {
+                alert('Erro ao enviar arquivo: ' + res.status);
+                setStatusErro();
+                carregando = false;
+                btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+                btnCarregar.title = 'Carregar';
+                return;
+              }
+              await res.json();
+              // Inicia monitoramento do status após envio do arquivo
+              monitorarStatusHigienizacao(file.name, statusCell, login);
+              // Não chama setStatusConcluido() diretamente; status será atualizado pela função de monitoramento
+            } catch (err) {
+              alert('Erro ao enviar arquivo.');
+              setStatusErro();
+            }
+            carregando = false;
+            btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+            btnCarregar.title = 'Carregar';
+          } else {
+            // Pausar (apenas visual, não pausa real)
+            carregando = false;
+            btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+            btnCarregar.title = 'Carregar';
+            setStatusAguardando();
+            alert('Carregamento pausado (apenas visual)');
+          }
+        };
+      });
+      btnAdicionar.dataset.listener = 'true';
+    }
+  }
+});
 
 // Utilitário para montar tabela dinâmica
 function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
@@ -200,7 +403,7 @@ function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
       if (col.key === 'data_criacao' || col.key === 'ultimo_log') {
         value = value ? new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
       }
-      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value ?? '-'}</td>`;
+      return `<td class='px-4 py-2 border-b whitespace-nowrap' style='vertical-align: middle;'>${value ?? '-'}</td>`;
     }).join('')}</tr>`
   ).join('');
   // Eventos de ordenação
@@ -274,12 +477,12 @@ function renderRecargasTable(data, tableHeadEl, tableBodyEl, sortState) {
   ];
   if (!Array.isArray(data) || data.length === 0) {
     tableHeadEl.innerHTML = '';
-    tableBodyEl.innerHTML = '<tr><td colspan="100%">Nenhuma recarga encontrada.</td></tr>';
+    tableBodyEl.innerHTML = '<tr><td colspan="100%" style="vertical-align: middle;">Nenhuma recarga encontrada.</td></tr>';
     return;
   }
   // Cabeçalho com ordenação
   tableHeadEl.innerHTML = columns.map(col => `
-    <th class="px-4 py-2 cursor-pointer whitespace-nowrap" data-col="${col.key}">
+    <th class="px-4 py-2 cursor-pointer whitespace-nowrap align-middle" data-col="${col.key}" style="vertical-align: middle;">
       ${col.label} ${sortState.col === col.key ? (sortState.dir === 'asc' ? '▲' : '▼') : ''}
     </th>`).join('');
   // Corpo
@@ -301,7 +504,7 @@ function renderRecargasTable(data, tableHeadEl, tableBodyEl, sortState) {
       if (col.key === 'data_saldo_carregado') {
         value = value ? new Date(value).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
       }
-      return `<td class='px-4 py-2 border-b whitespace-nowrap'>${value ?? '-'}</td>`;
+      return `<td class='px-4 py-2 border-b whitespace-nowrap' style='vertical-align: middle;'>${value ?? '-'}</td>`;
     }).join('')}</tr>`
   ).join('');
   // Eventos de ordenação
@@ -875,30 +1078,18 @@ changePasswordForm.addEventListener('submit', async (e) => {
   try {
     const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login, novaSenha: newPassword }),
     });
-
     const data = await res.json();
-
-    if (!res.ok) {
-      let errorMsg = 'Erro ao alterar a senha';
-      if (data && data.error) {
-        errorMsg = data.error;
-      } else if (res.statusText) {
-        errorMsg = `Erro ${res.status}: ${res.statusText}`;
-      }
-      throw new Error(errorMsg);
-    }
-
+    if (res.status === 500 || res.status === 504) throw new Error('Erro no servidor, espere um tempo e tente novamente');
+    if (!res.ok) throw new Error(data.error || 'Erro ao alterar senha');
     showToast(data.message || 'Senha alterada com sucesso!', 'success');
     closeChangePasswordModal();
   } catch (error) {
-    changePasswordError.textContent = error.message || 'Erro ao alterar a senha. Tente novamente.';
+    changePasswordError.textContent = error.message || 'Erro ao alterar senha.';
     changePasswordError.classList.remove('hidden');
-    showToast(error.message || 'Erro ao alterar a senha.', 'error');
+    showToast(error.message || 'Erro ao alterar senha.', 'error');
   } finally {
     document.getElementById('changePasswordBtnText').classList.remove('hidden');
     document.getElementById('changePasswordLoading').classList.add('hidden');
