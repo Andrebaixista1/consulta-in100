@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       let lotesDataOriginal = [];
       try {
-        const res = await fetch(`http://localhost:3000/api/status-lote?login=${encodeURIComponent(login)}`);
+        const res = await fetch(`https://api-consulta-in-100.vercel.app/api/status-lote?login=${encodeURIComponent(login)}`);
         if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
         const data = await res.json();
         console.log('Dados recebidos da API /api/status-lote:', data);
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let statusClass = 'bg-gray-100 text-gray-800';
           try {
             if (login && item.nome_arquivo) {
-              const resStatus = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const resStatus = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (resStatus.ok) {
                 const statusData = await resStatus.json();
                 if (statusData.status === 'Concluído') {
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const nome_arquivo = decodeURIComponent(this.getAttribute('data-nome'));
             if (!login || !nome_arquivo) return;
             try {
-              const res = await fetch(`http://localhost:3000/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao baixar arquivo');
               const contentType = res.headers.get('Content-Type');
               if (contentType && contentType.includes('application/json')) {
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let intervalId;
           async function checarStatus() {
             try {
-              const res = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao consultar status');
               const data = await res.json();
               if (data.status === 'Carregando') {
@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
     btnCarregar.title = 'Pausar';
     try {
       // Buscar créditos do usuário
-      const resCred = await fetch(`http://localhost:3000/api/creditos?login=${encodeURIComponent(login)}`);
+      const resCred = await fetch(`https://api-consulta-in-100.vercel.app/api/creditos?login=${encodeURIComponent(login)}`);
       if (!resCred.ok) {
         alert('Erro ao consultar créditos do usuário.');
         setStatusErro();
@@ -580,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
       formData.append('file', file);
       formData.append('nomeArquivoCsv', file.name);
       formData.append('login', login);
-      const res = await fetch('http://localhost:3000/api/higienizar', {
+      const res = await fetch('https://api-consulta-in-100.vercel.app/api/higienizar', {
         method: 'POST',
         body: formData
       });
@@ -684,7 +684,7 @@ function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
 
 // Usuários
 let usuariosSort = { col: '', dir: 'asc' };
-const API_URL = 'http://localhost:3000/';
+const API_URL = 'https://api-consulta-in-100.vercel.app/';
 
 usuariosBtn.addEventListener('click', async (e) => {
   e.preventDefault();
@@ -972,7 +972,7 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     loadingOverlay.classList.remove('hidden');
     loading.classList.remove('hidden');
-    const res = await fetch('http://localhost:3000/api/login', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ login: username, senha: password }),
@@ -1078,7 +1078,7 @@ searchForm.addEventListener('submit', async (e) => {
 
   try {
     // Sempre usa a API online
-    const API_BASE_URL = 'http://localhost:3000';
+    const API_BASE_URL = 'https://api-consulta-in-100.vercel.app';
     // Determina o endpoint com base no estado do switch
     const endpoint = consultaSwitch && !consultaSwitch.checked
       ? `${API_BASE_URL}/api/consulta2`
@@ -1295,7 +1295,7 @@ registerUserForm.addEventListener('submit', async (e) => {
 
     try {
         // !!! Substitua pela URL da sua API de cadastro !!!
-        const apiUrl = 'http://localhost:3000/api/cadastro';
+        const apiUrl = 'https://api-consulta-in-100.vercel.app/api/cadastro';
 
         const res = await fetch(apiUrl, {
             method: 'POST',
@@ -1368,7 +1368,7 @@ changePasswordForm.addEventListener('submit', async (e) => {
   changePasswordSubmitBtn.disabled = true;
 
   try {
-    const res = await fetch('http://localhost:3000/api/alterar', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login, novaSenha: newPassword }),
@@ -1437,7 +1437,7 @@ changePasswordForm.addEventListener('submit', async (e) => {
   if (changePasswordSubmitBtn) changePasswordSubmitBtn.disabled = true;
 
   try {
-    const res = await fetch('http://localhost:3000/api/alterar', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login, novaSenha })
@@ -1472,7 +1472,7 @@ async function openLoadCreditModal() {
 
   // Carregar lista de usuários
   try {
-    const response = await fetch('http://localhost:3000/api/userlogins');
+    const response = await fetch('https://api-consulta-in-100.vercel.app/api/userlogins');
     if (!response.ok) throw new Error('Erro ao carregar usuários');
     
     const data = await response.json();
@@ -1542,7 +1542,7 @@ loadCreditForm.addEventListener('submit', async (e) => {
   saveLoadCreditBtn.disabled = true;
 
   try {
-    const res = await fetch('http://localhost:3000/api/carregar', {
+    const res = await fetch('https://api-consulta-in-100.vercel.app/api/carregar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
