@@ -1098,9 +1098,7 @@ searchForm.addEventListener('submit', async (e) => {
     const ultimaAtualizacaoEl = document.getElementById('ultimaAtualizacao');
     if (ultimaAtualizacaoEl) {
       if (ultimaAtualizacao) {
-        // Ajusta para UTC-3 (horário de São Paulo)
         const dataAtualizacao = new Date(ultimaAtualizacao);
-        dataAtualizacao.setHours(dataAtualizacao.getHours() - 3);
         const hoje = new Date();
         hoje.setHours(0,0,0,0);
         const dataRef = new Date(dataAtualizacao);
@@ -1116,7 +1114,7 @@ searchForm.addEventListener('submit', async (e) => {
         } else {
           corClasse = '';
         }
-        ultimaAtualizacaoEl.textContent = dataAtualizacao.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        ultimaAtualizacaoEl.textContent = dataAtualizacao.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         ultimaAtualizacaoEl.className = corClasse;
       } else {
         ultimaAtualizacaoEl.textContent = '-';
