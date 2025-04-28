@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       let lotesDataOriginal = [];
       try {
-        const res = await fetch(`https://api-consulta-in-100.vercel.app/api/status-lote?login=${encodeURIComponent(login)}`);
+        const res = await fetch(`http://localhost:3000/api/status-lote?login=${encodeURIComponent(login)}`);
         if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
         const data = await res.json();
         console.log('Dados recebidos da API /api/status-lote:', data);
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let statusClass = 'bg-gray-100 text-gray-800';
           try {
             if (login && item.nome_arquivo) {
-              const resStatus = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const resStatus = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(item.nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (resStatus.ok) {
                 const statusData = await resStatus.json();
                 if (statusData.status === 'Concluído') {
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const nome_arquivo = decodeURIComponent(this.getAttribute('data-nome'));
             if (!login || !nome_arquivo) return;
             try {
-              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`http://localhost:3000/api/download?nome_arquivo=${encodeURIComponent(nome_arquivo)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao baixar arquivo');
               const contentType = res.headers.get('Content-Type');
               if (contentType && contentType.includes('application/json')) {
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
           let intervalId;
           async function checarStatus() {
             try {
-              const res = await fetch(`https://api-consulta-in-100.vercel.app/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
+              const res = await fetch(`http://localhost:3000/api/higienizar-status?nomeArquivoCsv=${encodeURIComponent(nomeArquivoSanitizado)}&login=${encodeURIComponent(login)}`);
               if (!res.ok) throw new Error('Erro ao consultar status');
               const data = await res.json();
               if (data.status === 'Carregando') {
@@ -512,56 +512,111 @@ document.addEventListener('DOMContentLoaded', function() {
         setStatusAguardando();
 
         btnCarregar.onclick = async function () {
-          if (!carregando) {
-            // Iniciar carregamento
-            const fileInput = row.querySelector('.arquivo-input');
-            const file = fileInput.files[0];
-            if (!file) {
-              alert('Selecione um arquivo antes de iniciar.');
-              return;
-            }
-            carregando = true;
-            btnCarregar.innerHTML = '<i class="fas fa-pause"></i>';
-            btnCarregar.title = 'Pausar';
-            setStatusProcessando();
-            try {
-              const formData = new FormData();
-              formData.append('file', file);
-              formData.append('nomeArquivoCsv', file.name);
-              const login = (document.getElementById('loggedUserName') && document.getElementById('loggedUserName').textContent) ? document.getElementById('loggedUserName').textContent.trim() : '';
-              formData.append('login', login);
-              const res = await fetch('https://api-consulta-in-100.vercel.app/api/higienizar', {
-                method: 'POST',
-                body: formData
-              });
-              if (!res.ok) {
-                alert('Erro ao enviar arquivo: ' + res.status);
-                setStatusErro();
-                carregando = false;
-                btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
-                btnCarregar.title = 'Carregar';
-                return;
-              }
-              await res.json();
-              // Inicia monitoramento do status após envio do arquivo
-              monitorarStatusHigienizacao(file.name, statusCell, login);
-              // Não chama setStatusConcluido() diretamente; status será atualizado pela função de monitoramento
-            } catch (err) {
-              alert('Erro ao enviar arquivo.');
-              setStatusErro();
-            }
-            carregando = false;
-            btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
-            btnCarregar.title = 'Carregar';
-          } else {
-            // Pausar (apenas visual, não pausa real)
-            carregando = false;
-            btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
-            btnCarregar.title = 'Carregar';
-            setStatusAguardando();
-            alert('Carregamento pausado (apenas visual)');
-          }
-        };
+  if (!carregando) {
+    // Iniciar carregamento
+    const fileInput = row.querySelector('.arquivo-input');
+    const file = fileInput.files[0];
+    if (!file) {
+      showToast('Selecione um arquivo antes de iniciar.', 'error');
+      return;
+    }
+    // Verificar quantidade de linhas do arquivo
+    let totalLinhas = 0;
+    try {
+      const text = await file.text();
+      const linhas = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      totalLinhas = linhas.length - 1; // Desconta header
+      if (totalLinhas <= 0) {
+        alert('O arquivo precisa conter pelo menos uma linha de dados além do cabeçalho.');
+        return;
+      }
+    } catch (err) {
+      alert('Erro ao ler o arquivo para contar as linhas.');
+      return;
+    }
+    // Consultar saldo antes de tudo
+    const login = (document.getElementById('loggedUserName') && document.getElementById('loggedUserName').textContent) ? document.getElementById('loggedUserName').textContent.trim() : '';
+    if (!login) {
+      alert('Usuário não identificado. Faça login novamente.');
+      return;
+    }
+    setStatusProcessando();
+    carregando = true;
+    btnCarregar.innerHTML = '<i class="fas fa-pause"></i>';
+    btnCarregar.title = 'Pausar';
+    try {
+      // Buscar créditos do usuário
+      const resCred = await fetch(`http://localhost:3000/api/creditos?login=${encodeURIComponent(login)}`);
+      if (!resCred.ok) {
+        alert('Erro ao consultar créditos do usuário.');
+        setStatusErro();
+        carregando = false;
+        btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+        btnCarregar.title = 'Carregar';
+        return;
+      }
+      const dataCred = await resCred.json();
+      // Ajuste: aceita resposta como array ou objeto
+      const saldoObj = Array.isArray(dataCred) ? dataCred[0] : dataCred;
+      const saldoDisponivel = saldoObj && typeof saldoObj.limite_disponivel !== 'undefined' ? Number(saldoObj.limite_disponivel) : null;
+      if (saldoDisponivel === null || isNaN(saldoDisponivel)) {
+        alert('Não foi possível obter o saldo disponível do usuário.');
+        setStatusErro();
+        carregando = false;
+        btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+        btnCarregar.title = 'Carregar';
+        return;
+      }
+      if (totalLinhas > saldoDisponivel) {
+        alert(`Saldo insuficiente. Você possui ${saldoDisponivel} créditos e o arquivo possui ${totalLinhas} linhas.`);
+        setStatusErro();
+        carregando = false;
+        btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+        btnCarregar.title = 'Carregar';
+        return;
+      }
+      // Enviar arquivo para higienização
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('nomeArquivoCsv', file.name);
+      formData.append('login', login);
+      const res = await fetch('http://localhost:3000/api/higienizar', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) {
+        let msg = 'Erro ao processar o arquivo.';
+        try {
+          const err = await res.json();
+          if (err && err.error) msg = err.error;
+        } catch (e) {}
+        alert(msg);
+        setStatusErro();
+        carregando = false;
+        btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+        btnCarregar.title = 'Carregar';
+        return;
+      }
+      await res.json();
+      // Inicia monitoramento do status após envio do arquivo
+      monitorarStatusHigienizacao(file.name, statusCell, login);
+      // Não chama setStatusConcluido() diretamente; status será atualizado pela função de monitoramento
+    } catch (err) {
+      showToast('Erro ao enviar arquivo ou consultar créditos.', 'error');
+      setStatusErro();
+    }
+    carregando = false;
+    btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+    btnCarregar.title = 'Carregar';
+  } else {
+    // Pausar (apenas visual, não pausa real)
+    carregando = false;
+    btnCarregar.innerHTML = '<i class="fas fa-upload"></i>';
+    btnCarregar.title = 'Carregar';
+    setStatusAguardando();
+    showToast('Carregamento pausado (apenas visual)', 'info');
+  }
+};
       });
       btnAdicionar.dataset.listener = 'true';
     }
@@ -629,7 +684,7 @@ function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
 
 // Usuários
 let usuariosSort = { col: '', dir: 'asc' };
-const API_URL = 'https://api-consulta-in-100.vercel.app';
+const API_URL = 'http://localhost:3000/';
 
 usuariosBtn.addEventListener('click', async (e) => {
   e.preventDefault();
@@ -917,7 +972,7 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     loadingOverlay.classList.remove('hidden');
     loading.classList.remove('hidden');
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/login', {
+    const res = await fetch('http://localhost:3000/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ login: username, senha: password }),
@@ -1023,7 +1078,7 @@ searchForm.addEventListener('submit', async (e) => {
 
   try {
     // Sempre usa a API online
-    const API_BASE_URL = 'https://api-consulta-in-100.vercel.app';
+    const API_BASE_URL = 'http://localhost:3000';
     // Determina o endpoint com base no estado do switch
     const endpoint = consultaSwitch && !consultaSwitch.checked
       ? `${API_BASE_URL}/api/consulta2`
@@ -1036,97 +1091,111 @@ searchForm.addEventListener('submit', async (e) => {
     if (res.status === 500 || res.status === 504) {
       throw new Error('Erro no servidor, espere um tempo e tente novamente');
     }
+    const data = await res.json();
+    console.log('DADOS DA API', data);
+    // Exibe a última atualização
+    const ultimaAtualizacao = data.consultas_api?.data_hora_registro;
+    const ultimaAtualizacaoEl = document.getElementById('ultimaAtualizacao');
+    if (ultimaAtualizacaoEl) {
+      if (ultimaAtualizacao) {
+        // Ajusta para UTC-3 (horário de São Paulo)
+        const dataAtualizacao = new Date(ultimaAtualizacao);
+        dataAtualizacao.setHours(dataAtualizacao.getHours() - 3);
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const dataRef = new Date(dataAtualizacao);
+        dataRef.setHours(0,0,0,0);
+        const diffDias = Math.floor((hoje - dataRef) / (1000*60*60*24));
+        let corClasse = '';
+        if (diffDias === 0) {
+          corClasse = 'text-green-600';
+        } else if (diffDias === 1) {
+          corClasse = 'text-yellow-500';
+        } else if (diffDias >= 2) {
+          corClasse = 'text-red-600';
+        } else {
+          corClasse = '';
+        }
+        ultimaAtualizacaoEl.textContent = dataAtualizacao.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        ultimaAtualizacaoEl.className = corClasse;
+      } else {
+        ultimaAtualizacaoEl.textContent = '-';
+        ultimaAtualizacaoEl.className = '';
+      }
+    }
     if (!res.ok) {
-       // Tenta ler o corpo do erro, se houver
-       let errorMsg = 'Erro na consulta';
-       try {
-         const errorData = await res.json();
-         if (errorData && errorData.error) {
-           errorMsg = errorData.error;
-         } else if (res.statusText) {
-            errorMsg = `Erro ${res.status}: ${res.statusText}`;
-         }
-       } catch (parseError) {
-         // Se não conseguir parsear o JSON, usa o statusText
-         errorMsg = `Erro ${res.status}: ${res.statusText}`;
-       }
-       throw new Error(errorMsg);
-    }
-    // Garante que só tenta ler JSON se a resposta realmente for JSON
-    const contentType = res.headers.get('content-type');
-    let response;
-    if (contentType && contentType.includes('application/json')) {
-      response = await res.json();
-    } else {
-      const text = await res.text();
-      throw new Error('Resposta inesperada do servidor: ' + text.slice(0, 100));
-    }
-
-    if (response.error) {
-      resultsError.textContent = response.error;
+      let errorMsg = 'Erro na consulta';
+      if (data && data.error) {
+        errorMsg = data.error;
+      } else if (res.statusText) {
+        errorMsg = `Erro ${res.status}: ${res.statusText}`;
+      }
+      resultsError.textContent = errorMsg;
       resultsError.classList.remove('hidden');
-      showToast(response.error, 'error');
-      return; // Retorna aqui para não tentar processar dados inexistentes
+      showToast(errorMsg, 'error');
+      return; // Interrompe o fluxo!
     }
-
     // Atualizar contadores/limites do dashboard com base na resposta da consulta
-    availableLimitEl.textContent = parseInt(response.limite_disponivel) ?? parseInt(availableLimitEl.textContent) ?? 0;
-    queriesCount.textContent = parseInt(response.consultas_realizada) ?? parseInt(queriesCount.textContent) ?? 0;
-    // Preserva o total carregado, pois a consulta não o retorna diretamente
+    availableLimitEl.textContent = parseInt(data.limite_disponivel) ?? parseInt(availableLimitEl.textContent) ?? 0;
+    queriesCount.textContent = parseInt(data.consultas_realizada) ?? parseInt(queriesCount.textContent) ?? 0;
     const currentTotalCarregado = parseInt(totalCarregadoEl.textContent) || 0;
     totalCarregadoEl.textContent = currentTotalCarregado;
-
     let usedPerc = 0;
     if (currentTotalCarregado > 0) {
         usedPerc = (parseInt(queriesCount.textContent) / currentTotalCarregado) * 100;
     }
     usedPercentageEl.textContent = usedPerc.toFixed(2).replace('.', ',') + '%';
-    // TODO: Calcular amountSpent se necessário
-
     // Verifica se a API retornou os detalhes da consulta
-    if (!response.consultas_api || Object.keys(response.consultas_api).length === 0) {
-      showToast('Consulta realizada, mas dados do benefício não encontrados.', 'warning'); // Usar warning se a consulta foi ok mas sem dados
+    if (!data.consultas_api || Object.keys(data.consultas_api).length === 0) {
+      showToast('Consulta realizada, mas dados do benefício não encontrados.', 'warning');
       resultsError.textContent = 'Dados do benefício não encontrados para esta consulta.';
       resultsError.classList.remove('hidden');
-      resultsSection.classList.add('hidden'); // Esconde a seção de resultados se não houver dados
-    } else {
-      const dataApi = response.consultas_api;
-      // Preenche os campos com os dados da API
-      document.getElementById('benefitNumber').textContent = dataApi.numero_beneficio || '-';
-      document.getElementById('documentNumber').textContent = dataApi.numero_documento || '-';
-      document.getElementById('name').textContent = dataApi.nome || '-';
-      document.getElementById('state').textContent = dataApi.estado || '-';
-      document.getElementById('alimony').textContent = formatBoolean(dataApi.pensao);
-      document.getElementById('birthDate').textContent = formatDate(dataApi.data_nascimento);
-      document.getElementById('age').textContent = calculateAge(dataApi.data_nascimento);
-      document.getElementById('blockType').textContent = translateTipoBloqueio(dataApi.tipo_bloqueio);
-      document.getElementById('grantDate').textContent = formatDate(dataApi.data_concessao);
-      document.getElementById('benefitEndDate').textContent = formatDate(dataApi.data_final_beneficio);
-      document.getElementById('creditType').textContent = translateTipoCredito(dataApi.tipo_credito);
-      document.getElementById('benefitCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_beneficio);
-      document.getElementById('consignedCardBalance').textContent = formatNumberWithCommas(dataApi.saldo_cartao_consignado);
-      document.getElementById('consignedCreditBalance').textContent = formatNumberWithCommas(dataApi.saldo_credito_consignado);
-      const benefitStatusEl = document.getElementById('benefitStatus');
-      const statusText = translateSituacaoBeneficio(dataApi.situacao_beneficio);
-      benefitStatusEl.textContent = statusText;
-      // Ajuste de cor conforme status
-      benefitStatusEl.style.color = '';
-      if (statusText === 'Bloqueado' || statusText === 'Inelegível') {
-        benefitStatusEl.style.color = '#d32f2f'; // vermelho
-      } else if (statusText === 'Elegível') {
-        benefitStatusEl.style.color = '#006400'; // verde escuro
-      }
-      document.getElementById('legalRepresentativeName').textContent = dataApi.nome_representante_legal || '-';
-      document.getElementById('bankInfo').textContent = dataApi.banco_desembolso || '-';
-      document.getElementById('agencyCode').textContent = dataApi.agencia_desembolso || '-';
-      document.getElementById('accountNumber').textContent = dataApi.conta_desembolso || '-';
-      document.getElementById('accountDigit').textContent = dataApi.digito_desembolso || '-';
-      document.getElementById('numberOfActiveSuspendedReservations').textContent = dataApi.numero_portabilidades || '0';
-
-      resultsSection.classList.remove('hidden'); // Mostra a seção de resultados
-      resultsError.classList.add('hidden'); // Esconde qualquer erro anterior
-      showToast('Consulta realizada com sucesso!', 'success');
+      resultsSection.classList.add('hidden');
+      return;
     }
+    // Preenche os campos com os dados da API
+    const dataApi = data.consultas_api;
+    const elMap = [
+      ['benefitNumber', dataApi.numero_beneficio],
+      ['documentNumber', dataApi.numero_documento],
+      ['name', dataApi.nome],
+      ['state', dataApi.estado],
+      ['alimony', formatBoolean(dataApi.pensao)],
+      ['birthDate', formatDate(dataApi.data_nascimento)],
+      ['age', calculateAge(dataApi.data_nascimento)],
+      ['blockType', translateTipoBloqueio(dataApi.tipo_bloqueio)],
+      ['grantDate', formatDate(dataApi.data_concessao)],
+      ['benefitEndDate', formatDate(dataApi.data_final_beneficio)],
+      ['creditType', translateTipoCredito(dataApi.tipo_credito)],
+      ['benefitCardBalance', formatNumberWithCommas(dataApi.saldo_cartao_beneficio)],
+      ['consignedCardBalance', formatNumberWithCommas(dataApi.saldo_cartao_consignado)],
+      ['consignedCreditBalance', formatNumberWithCommas(dataApi.saldo_credito_consignado)],
+      ['maxTotalBalance', formatNumberWithCommas(dataApi.saldo_total_maximo)],
+      ['usedTotalBalance', formatNumberWithCommas(dataApi.saldo_total_utilizado)],
+      ['availableTotalBalance', formatNumberWithCommas(dataApi.saldo_total_disponivel)],
+      ['queryDate', formatDate(dataApi.data_consulta)],
+      ['queryReturnDate', formatDate(dataApi.data_retorno_consulta)],
+      ['queryReturnTime', dataApi.hora_retorno_consulta || '-'],
+      ['legalRepresentativeName', dataApi.nome_representante_legal || '-'],
+      ['disbursementBank', dataApi.banco_desembolso || '-'],
+      ['disbursementBranch', dataApi.agencia_desembolso || '-'],
+      ['disbursementAccount', dataApi.conta_desembolso || '-'],
+      ['disbursementDigit', dataApi.digito_desembolso || '-'],
+      ['portabilitiesCount', dataApi.numero_portabilidades || '-'],
+    ];
+    elMap.forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value ?? '-';
+    });
+    const benefitStatusEl = document.getElementById('benefitStatus');
+    const statusText = translateSituacaoBeneficio(dataApi.situacao_beneficio);
+    if (benefitStatusEl) {
+      benefitStatusEl.textContent = statusText;
+      benefitStatusEl.className = statusText === 'Bloqueado' ? 'text-red-700 font-bold' : '';
+    }
+    resultsSection.classList.remove('hidden');
+    resultsError.classList.add('hidden');
+    showToast('Consulta realizada com sucesso!', 'success');
   } catch (error) {
     resultsError.textContent = error.message || 'Erro ao consultar os dados. Tente novamente.';
     resultsError.classList.remove('hidden');
@@ -1173,11 +1242,6 @@ adminDropdownToggle.addEventListener('click', (e) => {
     adminDropdownMenu.classList.toggle('hidden');
 });
 
-// --- Dropdown Usuário ---
-userDropdownToggle.addEventListener('click', (e) => {
-    e.stopPropagation(); // Impede que o clique se propague para o document
-    userDropdownMenu.classList.toggle('hidden');
-});
 
 // Fechar o dropdown se clicar fora dele
 document.addEventListener('click', (event) => {
@@ -1231,7 +1295,7 @@ registerUserForm.addEventListener('submit', async (e) => {
 
     try {
         // !!! Substitua pela URL da sua API de cadastro !!!
-        const apiUrl = 'https://api-consulta-in-100.vercel.app/api/cadastro';
+        const apiUrl = 'http://localhost:3000/api/cadastro';
 
         const res = await fetch(apiUrl, {
             method: 'POST',
@@ -1304,7 +1368,7 @@ changePasswordForm.addEventListener('submit', async (e) => {
   changePasswordSubmitBtn.disabled = true;
 
   try {
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
+    const res = await fetch('http://localhost:3000/api/alterar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login, novaSenha: newPassword }),
@@ -1373,7 +1437,7 @@ changePasswordForm.addEventListener('submit', async (e) => {
   if (changePasswordSubmitBtn) changePasswordSubmitBtn.disabled = true;
 
   try {
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/alterar', {
+    const res = await fetch('http://localhost:3000/api/alterar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ login, novaSenha })
@@ -1408,7 +1472,7 @@ async function openLoadCreditModal() {
 
   // Carregar lista de usuários
   try {
-    const response = await fetch('https://api-consulta-in-100.vercel.app/api/userlogins');
+    const response = await fetch('http://localhost:3000/api/userlogins');
     if (!response.ok) throw new Error('Erro ao carregar usuários');
     
     const data = await response.json();
@@ -1478,7 +1542,7 @@ loadCreditForm.addEventListener('submit', async (e) => {
   saveLoadCreditBtn.disabled = true;
 
   try {
-    const res = await fetch('https://api-consulta-in-100.vercel.app/api/carregar', {
+    const res = await fetch('http://localhost:3000/api/carregar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
