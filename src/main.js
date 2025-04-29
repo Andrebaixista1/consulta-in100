@@ -684,7 +684,7 @@ function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
 
 // Usuários
 let usuariosSort = { col: '', dir: 'asc' };
-const API_URL = 'https://api-consulta-in-100.vercel.app/';
+const API_URL = 'https://api-consulta-in-100.vercel.app';
 
 usuariosBtn.addEventListener('click', async (e) => {
   e.preventDefault();
