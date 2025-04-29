@@ -219,12 +219,13 @@ document.addEventListener('DOMContentLoaded', function() {
       let lotesDataOriginal = [];
       try {
         const res = await fetch(`https://api-consulta-in-100.vercel.app/api/status-lote?login=${encodeURIComponent(login)}`);
-        if (!res.ok) throw new Error('Erro ao buscar status dos lotes');
+        if (!res.ok) throw new Error(`Erro do servidor: ${res.status} ${res.statusText}`);
         const data = await res.json();
         console.log('Dados recebidos da API /api/status-lote:', data);
         if (!Array.isArray(data) || data.length === 0) {
           document.getElementById('statusLoteMsg').textContent = 'Nenhum lote encontrado.';
           atualizarTotaisDownloadLotes([]);
+          showToast('Nenhum lote encontrado.', 'info');
           return;
         }
         lotesDataOriginal = data;
@@ -233,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (err) {
         document.getElementById('statusLoteMsg').textContent = 'Erro ao buscar status dos lotes.';
         atualizarTotaisDownloadLotes([]);
+        showToast(err.message || 'Erro ao buscar status dos lotes.', 'error');
         console.error(err);
       }
 
@@ -636,6 +638,7 @@ function renderUsuariosTable(data, tableHeadEl, tableBodyEl, sortState) {
   if (!Array.isArray(data) || data.length === 0) {
     tableHeadEl.innerHTML = '';
     tableBodyEl.innerHTML = '<tr><td colspan="100%">Nenhum dado encontrado.</td></tr>';
+    showToast('Nenhum dado encontrado.', 'info');
     return;
   }
   // Cabeçalho com ordenação
@@ -693,31 +696,32 @@ usuariosBtn.addEventListener('click', async (e) => {
   const tableHead = document.getElementById('usuariosTableHead');
   const tableBody = document.getElementById('usuariosTableBody');
   tableBody.innerHTML = '<tr><td colspan="100%">Carregando...</td></tr>';
-  try {
-    const res = await fetch(`${API_URL}/api/usuarios`);
-    let data = [];
-    // Só tenta ler JSON se houver body e status OK
-    if (res.ok) {
+    try {
+      const res = await fetch(`${API_URL}/api/usuarios`);
+      let data = [];
+      if (!res.ok) {
+        throw new Error(`Erro do servidor: ${res.status} ${res.statusText}`);
+      }
       const text = await res.text();
       if (text) {
         data = JSON.parse(text);
       }
-    }
-    if (!Array.isArray(data) || data.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="100%">Nenhum usuário encontrado.</td></tr>';
+      if (!Array.isArray(data) || data.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="100%">Nenhum usuário encontrado.</td></tr>';
+        tableHead.innerHTML = '';
+        showToast('Nenhum usuário encontrado.', 'info');
+        return;
+      }
+      usuariosSort = { col: 'id', dir: 'asc' };
+      const usuariosTitulo = document.querySelector('#usuariosModal h3');
+      if (usuariosTitulo) usuariosTitulo.textContent = `Usuários - ${data.length}`;
+      renderUsuariosTable(data, tableHead, tableBody, usuariosSort);
+    } catch (err) {
+      tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar usuários: ${err.message}</td></tr>`;
       tableHead.innerHTML = '';
-      return;
+      showToast(err.message || 'Erro ao buscar usuários.', 'error');
     }
-    usuariosSort = { col: 'id', dir: 'asc' };
-    // Atualiza o título do modal com o contador
-    const usuariosTitulo = document.querySelector('#usuariosModal h3');
-    if (usuariosTitulo) usuariosTitulo.textContent = `Usuários - ${data.length}`;
-    renderUsuariosTable(data, tableHead, tableBody, usuariosSort);
-  } catch (err) {
-    tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar usuários: ${err.message}</td></tr>`;
-    tableHead.innerHTML = '';
-  }
-});
+  });
 if (fecharUsuariosModal) fecharUsuariosModal.addEventListener('click', () => usuariosModal.classList.add('hidden'));
 if (usuariosOverlay) usuariosOverlay.addEventListener('click', () => usuariosModal.classList.add('hidden'));
 
@@ -794,11 +798,18 @@ recargasBtn.addEventListener('click', async (e) => {
   try {
     const res = await fetch(`${API_URL}/api/creditos`);
     let data = [];
-    if (res.ok) {
-      const text = await res.text();
-      if (text) {
-        data = JSON.parse(text);
-      }
+    if (!res.ok) {
+      throw new Error(`Erro do servidor: ${res.status} ${res.statusText}`);
+    }
+    const text = await res.text();
+    if (text) {
+      data = JSON.parse(text);
+    }
+    if (!Array.isArray(data) || data.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="100%">Nenhuma recarga encontrada.</td></tr>';
+      tableHead.innerHTML = '';
+      showToast('Nenhuma recarga encontrada.', 'info');
+      return;
     }
     recargasRawData = Array.isArray(data) ? data : [];
     recargasFilteredData = [...recargasRawData];
@@ -806,6 +817,7 @@ recargasBtn.addEventListener('click', async (e) => {
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan='100%'>Erro ao buscar recargas: ${err.message}</td></tr>`;
     tableHead.innerHTML = '';
+    showToast(err.message || 'Erro ao buscar recargas.', 'error');
   }
 });
 
