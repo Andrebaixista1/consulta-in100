@@ -222,6 +222,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!res.ok) throw new Error(`Erro do servidor: ${res.status} ${res.statusText}`);
         const data = await res.json();
         console.log('Dados recebidos da API /api/status-lote:', data);
+        // Novo tratamento para resposta objeto
+        if (data && typeof data === 'object' && !Array.isArray(data) && data.status) {
+          const code = Number(data.status.code);
+          const key = String(data.status.key || '').toLowerCase();
+          if (code === 2 && (key === 'success' || key === 'sucesso')) {
+            // Exibe normalmente (pode adaptar para exibir campos desejados)
+            document.getElementById('statusLoteMsg').textContent = 'Consulta realizada com sucesso.';
+            // Aqui você pode montar a exibição dos dados do objeto
+            // Exemplo: mostrar o código, nome, data, etc.
+            // Se quiser exibir em tabela, adapte conforme necessário
+            // Exemplo simples:
+            let html = `<b>Status:</b> ${data.status.name || '-'}<br>`;
+            html += `<b>Código:</b> ${data.code || '-'}<br>`;
+            html += `<b>Data:</b> ${data.status.date ? new Date(data.status.date).toLocaleString('pt-BR') : '-'}<br>`;
+            document.getElementById('statusLoteMsg').innerHTML = html;
+            showToast('Consulta realizada com sucesso.', 'success');
+            return;
+          } else {
+            // Código diferente de sucesso
+            document.getElementById('statusLoteMsg').textContent = 'Nenhum lote encontrado ou status diferente de sucesso.';
+            atualizarTotaisDownloadLotes([]);
+            showToast('Nenhum lote encontrado ou status diferente de sucesso.', 'info');
+            return;
+          }
+        }
+        // Tratamento padrão (array)
         if (!Array.isArray(data) || data.length === 0) {
           document.getElementById('statusLoteMsg').textContent = 'Nenhum lote encontrado.';
           atualizarTotaisDownloadLotes([]);
